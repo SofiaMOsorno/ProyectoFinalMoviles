@@ -20,71 +20,78 @@ class RegisterScreen extends StatelessWidget {
         ),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-                // Start a Queue header
-                CustomButton(
-                  text: 'Start a Queue',
-                  onPressed: () {
-                  },
-                  
-                ),
-                const SizedBox(height: 20),
-                // Create username field
-                const CustomTextField(
-                  label: 'Create username*',
-                ),
-                const SizedBox(height: 25),
-                // Password field
-                const CustomTextField(
-                  label: 'Password*',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 25),
-                // Confirm Password field
-                const CustomTextField(
-                  label: 'Confirm Password*',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 15),
-                // Upload profile pic section
-                _buildUploadSection(context),
-                const SizedBox(height: 30),
-                // Register button
-                CustomButton(
-                  text: 'Register',
-                  onPressed: () {
-                    // TODO: Implement registration logic
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Registration functionality coming soon'),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 25),
-                // Already have an account text
-                const Text(
-                  "Already have an account?",
-                  style: TextStyle(
-                    color: AppColors.textWhite,
-                    fontSize: 16,
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            // Start a Queue header (full width, no padding)
+            SizedBox(
+              width: double.infinity,
+              child: CustomButton(
+                text: 'Start a Queue',
+                borderRadius: 0,
+                onPressed: () {},
+              ),
+            ),
+            // Rest of content with padding
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  // Create username field
+                  const CustomTextField(
+                    label: 'Create username*',
                   ),
-                ),
-                const SizedBox(height: 15),
-                // Login button
-                CustomButton(
-                  text: 'Login',
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              const SizedBox(height: 30),
-            ],
-          ),
+                  const SizedBox(height: 25),
+                  // Password field
+                  const CustomTextField(
+                    label: 'Password*',
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 25),
+                  // Confirm Password field
+                  const CustomTextField(
+                    label: 'Confirm Password*',
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 15),
+                  // Upload profile pic section
+                  _buildUploadSection(context),
+                  const SizedBox(height: 30),
+                  // Register button
+                  CustomButton(
+                    text: 'Register',
+                    onPressed: () {
+                      // TODO: Implement registration logic
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Registration functionality coming soon'),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 25),
+                  // Already have an account text
+                  const Text(
+                    "Already have an account?",
+                    style: TextStyle(
+                      color: AppColors.textWhite,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  // Login button
+                  CustomButton(
+                    text: 'Login',
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  const SizedBox(height: 30),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
