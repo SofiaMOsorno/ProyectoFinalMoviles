@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_final/core/constants/app_colors.dart';
 
-/// Custom button widget following the app design
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
@@ -9,6 +8,7 @@ class CustomButton extends StatelessWidget {
   final Color textColor;
   final double? width;
   final double height;
+  final double borderRadius;
 
   const CustomButton({
     super.key,
@@ -18,6 +18,7 @@ class CustomButton extends StatelessWidget {
     this.textColor = AppColors.darkBlue,
     this.width,
     this.height = 70,
+    this.borderRadius = 30.0,
   });
 
   @override
@@ -30,7 +31,7 @@ class CustomButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(borderRadius),
           ),
           elevation: 0,
         ),

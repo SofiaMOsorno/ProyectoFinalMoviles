@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_final/core/constants/app_colors.dart';
+import 'package:proyecto_final/shared/widgets/custom_button.dart';
 
-/// Join queue screen with QR scanner placeholder
 class JoinScreen extends StatelessWidget {
   const JoinScreen({super.key});
 
@@ -24,27 +24,17 @@ class JoinScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Title section with button-like styling
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 30.0),
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            decoration: BoxDecoration(
-              color: AppColors.primaryRed,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppColors.darkBlue,
-                width: 3,
-              ),
-            ),
-            child: const Text(
-              'JOIN A QUEUE',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.darkBlue,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.5,
+          // Title section with button styling
+          Padding(
+            padding: const EdgeInsets.only(top: 20.0, left: 0, right: 0),
+            child: SizedBox(
+              width: double.infinity,
+              child: CustomButton(
+                text: 'JOIN A QUEUE',
+                borderRadius: 0,
+                onPressed: () {
+                  // TODO: Implement camera functionality
+                },
               ),
             ),
           ),

@@ -16,7 +16,7 @@ class RegisterScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textWhite),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
         ),
       ),
       body: SingleChildScrollView(
@@ -28,7 +28,9 @@ class RegisterScreen extends StatelessWidget {
                 // Start a Queue header
                 CustomButton(
                   text: 'Start a Queue',
-                  onPressed: () {},
+                  onPressed: () {
+                  },
+                  
                 ),
                 const SizedBox(height: 20),
                 // Create username field
