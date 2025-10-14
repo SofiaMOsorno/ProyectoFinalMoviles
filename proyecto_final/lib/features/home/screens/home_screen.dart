@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_final/core/constants/app_colors.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
+import 'package:proyecto_final/features/home/screens/join_screen.dart';
 
 /// Home screen with options to start or join a queue
 class HomeScreen extends StatelessWidget {
@@ -38,7 +39,12 @@ class HomeScreen extends StatelessWidget {
                   child: CustomButton(
                     text: 'Join a Queue',
                     onPressed: () {
-                      // TODO: Navigate to join queue screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const JoinScreen(),
+                        ),
+                      );
                     },
                   ),
                 ),
