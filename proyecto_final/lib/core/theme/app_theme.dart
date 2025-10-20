@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_final/core/constants/app_colors.dart';
 
-/// Application theme configuration
 class AppTheme {
   static ThemeData get theme {
     return ThemeData(

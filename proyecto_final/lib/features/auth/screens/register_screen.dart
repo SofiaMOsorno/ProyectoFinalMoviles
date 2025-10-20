@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:proyecto_final/core/constants/app_colors.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/shared/widgets/custom_text_field.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-/// Registration screen for new users
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
 
@@ -23,44 +23,46 @@ class RegisterScreen extends StatelessWidget {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            // Start a Queue header (full width, no padding)
             SizedBox(
               width: double.infinity,
               child: CustomButton(
                 text: 'Start a Queue',
+                height: 100,
+                textStyle: GoogleFonts.ericaOne(
+                  color: AppColors.primaryPurple,
+                  fontSize: 43,
+                ),
                 borderRadius: 0,
                 onPressed: () {},
               ),
             ),
-            // Rest of content with padding
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30.0),
               child: Column(
                 children: [
-                  const SizedBox(height: 20),
-                  // Create username field
+                  const SizedBox(height: 15),
                   const CustomTextField(
                     label: 'Create username*',
                   ),
-                  const SizedBox(height: 25),
-                  // Password field
+                  const SizedBox(height: 15),
                   const CustomTextField(
                     label: 'Password*',
                     obscureText: true,
                   ),
-                  const SizedBox(height: 25),
-                  // Confirm Password field
+                  const SizedBox(height: 15),
                   const CustomTextField(
                     label: 'Confirm Password*',
                     obscureText: true,
                   ),
                   const SizedBox(height: 15),
-                  // Upload profile pic section
                   _buildUploadSection(context),
                   const SizedBox(height: 30),
-                  // Register button
                   CustomButton(
                     text: 'Register',
+                    textStyle: GoogleFonts.ericaOne(
+                      color: Colors.white,
+                      fontSize: 28,
+                    ),
                     onPressed: () {
                       // TODO: Implement registration logic
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -70,8 +72,7 @@ class RegisterScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 25),
-                  // Already have an account text
+                  const SizedBox(height: 15),
                   const Text(
                     "Already have an account?",
                     style: TextStyle(
@@ -80,9 +81,12 @@ class RegisterScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  // Login button
                   CustomButton(
                     text: 'Login',
+                    textStyle: GoogleFonts.ericaOne(
+                      color: Colors.white,
+                      fontSize: 28,
+                    ),
                     onPressed: () {
                       Navigator.pop(context);
                     },

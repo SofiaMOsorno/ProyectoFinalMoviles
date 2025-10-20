@@ -104,7 +104,6 @@ class JoinScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         Navigator.pop(context);
-                        Navigator.pop(context);
                       },
                       child: Text(
                         'CANCEL',
@@ -122,14 +121,18 @@ class JoinScreen extends StatelessWidget {
         },
         child: Column(
           children: [
-            // Title section with button styling
             Padding(
               padding: const EdgeInsets.only(top: 20.0, left: 0, right: 0),
               child: SizedBox(
+                height: 100,
                 width: double.infinity,
                 child: CustomButton(
                   text: 'JOIN A QUEUE',
                   borderRadius: 0,
+                  textStyle: GoogleFonts.ericaOne(
+                    color: AppColors.darkBlue,
+                    fontSize: 43,
+                  ),
                   onPressed: () {
                     // TODO: Implement camera functionality
                   },
@@ -137,7 +140,6 @@ class JoinScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            // Camera image section - fills remaining space
             Expanded(
               child: Image.asset(
                 'assets/images/camara.png',

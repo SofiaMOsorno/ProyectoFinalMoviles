@@ -9,6 +9,7 @@ class CustomButton extends StatelessWidget {
   final double? width;
   final double height;
   final double borderRadius;
+  final TextStyle? textStyle;
 
   const CustomButton({
     super.key,
@@ -19,6 +20,7 @@ class CustomButton extends StatelessWidget {
     this.width,
     this.height = 70,
     this.borderRadius = 30.0,
+    this.textStyle,
   });
 
   @override
@@ -37,7 +39,7 @@ class CustomButton extends StatelessWidget {
         ),
         child: Text(
           text.toUpperCase(),
-          style: TextStyle(
+          style: textStyle ?? TextStyle(
             color: textColor,
             fontSize: 28,
             fontWeight: FontWeight.w900,

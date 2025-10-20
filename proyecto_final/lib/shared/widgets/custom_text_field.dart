@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_final/core/constants/app_colors.dart';
 
-/// Custom text field widget following the app design
 class CustomTextField extends StatelessWidget {
   final String? label;
   final bool obscureText;
