@@ -5,7 +5,9 @@ import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 
 class InQueueScreen extends StatelessWidget {
-  const InQueueScreen({super.key});
+  final String? userName;
+
+  const InQueueScreen({super.key, this.userName});
 
   @override
   Widget build(BuildContext context) {
