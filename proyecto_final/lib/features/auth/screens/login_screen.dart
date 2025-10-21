@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:proyecto_final/core/constants/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/shared/widgets/custom_text_field.dart';
+import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -9,105 +11,120 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primaryPurple,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryPurple,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textWhite),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  Text(
-                    'WELCOME\nBACK!',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.ericaOne(
-                      color: AppColors.lightPurple,
-                      fontSize: 48,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Scaffold(
+          backgroundColor: themeProvider.primaryColor,
+          drawer: const AppDrawer(),
+          appBar: AppBar(
+            backgroundColor: themeProvider.primaryColor,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: themeProvider.textPrimary),
+              onPressed: () => Navigator.pop(context),
             ),
-            SizedBox(
-              width: double.infinity,
-              child: CustomButton(
-                height: 100,
-                text: 'Start a Queue',
-                textStyle: GoogleFonts.ericaOne(
-                  color: AppColors.primaryPurple,
-                  fontSize: 43,
+            actions: [
+              Builder(
+                builder: (context) => IconButton(
+                  icon: Icon(Icons.menu, color: themeProvider.textPrimary),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
-                borderRadius: 0,
-                onPressed: () {},
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20),
-              child: Column(
-                children: [
-                  const SizedBox(height: 5),
-                  const CustomTextField(
-                    label: 'Username',
-                  ),
-                  const SizedBox(height: 5),
-                  const CustomTextField(
-                    label: 'Password',
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 40),
-                  CustomButton(
-                    text: 'Login',
-                    textStyle: GoogleFonts.ericaOne(
-                      color: AppColors.textWhite,
-                      fontSize: 28,
-                    ),
-                    onPressed: () {
-                      // TODO: Implement login logic
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Login functionality coming soon'),
+            ],
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      Text(
+                        'WELCOME\nBACK!',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.ericaOne(
+                          color: themeProvider.lightAccent,
+                          fontSize: 48,
+                          height: 1.2,
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
-                  const SizedBox(height: 25),
-                  const Text(
-                    "Don't have an account yet?",
-                    style: TextStyle(
-                      color: AppColors.textWhite,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  CustomButton(
-                    text: 'Register',
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: CustomButton(
+                    height: 100,
+                    text: 'Start a Queue',
+                    backgroundColor: themeProvider.secondaryColor,
                     textStyle: GoogleFonts.ericaOne(
-                      color: AppColors.textWhite,
-                      fontSize: 28,
+                      color: themeProvider.primaryColor,
+                      fontSize: 43,
                     ),
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/register');
-                    },
+                    borderRadius: 0,
+                    onPressed: () {},
                   ),
-                  const SizedBox(height: 30),
-                ],
-              ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 20),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 5),
+                      const CustomTextField(
+                        label: 'Username',
+                      ),
+                      const SizedBox(height: 5),
+                      const CustomTextField(
+                        label: 'Password',
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 40),
+                      CustomButton(
+                        text: 'Login',
+                        backgroundColor: themeProvider.secondaryColor,
+                        textStyle: GoogleFonts.ericaOne(
+                          color: themeProvider.textPrimary,
+                          fontSize: 28,
+                        ),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Login functionality coming soon'),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 25),
+                      Text(
+                        "Don't have an account yet?",
+                        style: TextStyle(
+                          color: themeProvider.textPrimary,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      CustomButton(
+                        text: 'Register',
+                        backgroundColor: themeProvider.secondaryColor,
+                        textStyle: GoogleFonts.ericaOne(
+                          color: themeProvider.textPrimary,
+                          fontSize: 28,
+                        ),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/register');
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

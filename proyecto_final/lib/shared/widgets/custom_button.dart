@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:proyecto_final/core/constants/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:proyecto_final/core/theme/theme_provider.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
-  final Color backgroundColor;
-  final Color textColor;
+  final Color? backgroundColor;
+  final Color? textColor;
   final double? width;
   final double height;
   final double borderRadius;
@@ -15,8 +16,8 @@ class CustomButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onPressed,
-    this.backgroundColor = AppColors.primaryRed,
-    this.textColor = AppColors.darkBlue,
+    this.backgroundColor,
+    this.textColor,
     this.width,
     this.height = 70,
     this.borderRadius = 30.0,
@@ -25,13 +26,15 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return SizedBox(
       width: width ?? MediaQuery.of(context).size.width * 0.85,
       height: height,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
+          backgroundColor: backgroundColor ?? themeProvider.secondaryColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
           ),
@@ -40,7 +43,7 @@ class CustomButton extends StatelessWidget {
         child: Text(
           text.toUpperCase(),
           style: textStyle ?? TextStyle(
-            color: textColor,
+            color: textColor ?? themeProvider.backgroundColor,
             fontSize: 28,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.2,
