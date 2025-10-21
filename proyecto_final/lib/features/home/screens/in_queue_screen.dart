@@ -69,54 +69,41 @@ class InQueueScreen extends StatelessWidget {
                           const SizedBox(height: 20),
                           SizedBox(
                             height: 300,
+                            width: 300,
                             child: Stack(
-                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
                               children: [
-                                Positioned(
-                                  left: -100,
-                                  top: 0,
-                                  child: Container(
-                                    width: 150,
-                                    height: 300,
-                                    decoration: BoxDecoration(
-                                      color: themeProvider.secondaryColor,
+                                SizedBox(
+                                  width: 280,
+                                  height: 280,
+                                  child: CircularProgressIndicator(
+                                    value: 0.25,
+                                    strokeWidth: 20,
+                                    backgroundColor: themeProvider.textPrimary.withOpacity(0.2),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      themeProvider.secondaryColor,
                                     ),
                                   ),
                                 ),
-                                Positioned(
-                                  left: -90,
-                                  top: 0,
-                                  child: Container(
-                                    width: 300,
-                                    height: 300,
-                                    decoration: BoxDecoration(
-                                      color: themeProvider.secondaryColor,
-                                      shape: BoxShape.circle,
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '15',
+                                      style: GoogleFonts.ericaOne(
+                                        color: themeProvider.textPrimary,
+                                        fontSize: 120,
+                                        height: 1.0,
+                                      ),
                                     ),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: -10,
-                                  top: 55,
-                                  child: Text(
-                                    '15',
-                                    style: GoogleFonts.ericaOne(
-                                      color: themeProvider.textPrimary,
-                                      fontSize: 180,
-                                      height: 1.0,
+                                    Text(
+                                      'Place',
+                                      style: GoogleFonts.ericaOne(
+                                        color: themeProvider.textPrimary,
+                                        fontSize: 35,
+                                      ),
                                     ),
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 0,
-                                  bottom: -10,
-                                  child: Text(
-                                    'Place...',
-                                    style: GoogleFonts.ericaOne(
-                                      color: themeProvider.textPrimary,
-                                      fontSize: 45,
-                                    ),
-                                  ),
+                                  ],
                                 ),
                               ],
                             ),
