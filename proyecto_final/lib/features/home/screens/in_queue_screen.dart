@@ -144,8 +144,85 @@ class InQueueScreen extends StatelessWidget {
                               elevation: 0,
                             ),
                             onPressed: () {
-                              Navigator.pop(context);
-                              Navigator.pop(context);
+                              //
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: themeProvider.textField,
+                                builder: (BuildContext context) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: themeProvider.secondaryColor, width: 10),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'LEAVE QUEUE?',
+                                          style: GoogleFonts.ericaOne(
+                                            color: themeProvider.secondaryColor,
+                                            fontSize: 40,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          "Are you sure you want to leave this queue? If you rejoin the queue later you'll enter in last place.",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.lexendDeca(
+                                            color: themeProvider.secondaryColor,
+                                            fontSize: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        
+                                        const SizedBox(height: 20),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: themeProvider.secondaryColor,
+                                            minimumSize: const Size(double.infinity, 45),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(30),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text(
+                                            'LEAVE',
+                                            style: GoogleFonts.ericaOne(
+                                              color: themeProvider.textPrimary,
+                                              fontSize: 30,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: themeProvider.backgroundColor,
+                                            minimumSize: const Size(double.infinity, 45),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(30),
+                                            ),
+                                          ),
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text(
+                                            'CANCEL',
+                                            style: GoogleFonts.ericaOne(
+                                              color: themeProvider.textPrimary,
+                                              fontSize: 30,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
                             },
                             child: Text(
                               'LEAVE QUEUE',
