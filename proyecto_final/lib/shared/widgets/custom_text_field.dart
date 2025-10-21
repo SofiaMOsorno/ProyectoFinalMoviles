@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:proyecto_final/core/constants/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:proyecto_final/core/theme/theme_provider.dart';
 
 class CustomTextField extends StatelessWidget {
   final String? label;
@@ -17,6 +18,8 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -25,8 +28,8 @@ class CustomTextField extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8.0),
             child: Text(
               label!,
-              style: const TextStyle(
-                color: AppColors.textWhite,
+              style: TextStyle(
+                color: themeProvider.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w400,
               ),
@@ -35,10 +38,10 @@ class CustomTextField extends StatelessWidget {
         Container(
           width: MediaQuery.of(context).size.width * 0.85,
           decoration: BoxDecoration(
-            color: AppColors.textField,
+            color: themeProvider.textField,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: AppColors.borderDarkBlue,
+              color: themeProvider.border,
               width: 3,
             ),
           ),
@@ -46,8 +49,8 @@ class CustomTextField extends StatelessWidget {
             controller: controller,
             obscureText: obscureText,
             keyboardType: keyboardType,
-            style: const TextStyle(
-              color: Colors.black,
+            style: TextStyle(
+              color: themeProvider.isDarkMode ? Colors.white : Colors.black,
               fontSize: 18,
             ),
             decoration: const InputDecoration(
