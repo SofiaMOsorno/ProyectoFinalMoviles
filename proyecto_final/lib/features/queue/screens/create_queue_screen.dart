@@ -564,10 +564,8 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
                     ),
                   ),
                   onPressed: () {
-                    // Cerrar el diálogo
                     Navigator.pop(context);
-                    // Navegar a la pantalla de created queues reemplazando create-queue
-                    Navigator.pushReplacementNamed(context, '/created-queues');
+                    Navigator.pushReplacementNamed(context, '/queue-qr');
                   },
                   child: Text(
                     'OK',

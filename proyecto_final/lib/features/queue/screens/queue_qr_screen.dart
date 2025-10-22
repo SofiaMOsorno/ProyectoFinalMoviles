@@ -115,7 +115,11 @@ class QueueQrScreen extends StatelessWidget {
           elevation: 0,
         ),
         onPressed: () {
-          Navigator.pushNamed(context, '/management');
+          Navigator.pushNamed(
+            context, 
+            '/management',
+            arguments: 'My Queue', // Nombre hardcodeado por ahora
+          );
         },
         child: Text(
           'MANAGE',
