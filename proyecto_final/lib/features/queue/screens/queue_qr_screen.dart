@@ -18,18 +18,23 @@ class QueueQrScreen extends StatelessWidget {
             children: [
               _buildHeader(context, themeProvider),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 30),
-                      _buildQrSection(themeProvider),
-                      const Spacer(),
-                      _buildManageButton(context, themeProvider),
-                      const SizedBox(height: 16),
-                      _buildActionButtons(themeProvider),
-                      const SizedBox(height: 30),
-                    ],
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/big-qr');
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 30),
+                        _buildQrSection(context, themeProvider),
+                        const Spacer(),
+                        _buildManageButton(context, themeProvider),
+                        const SizedBox(height: 16),
+                        _buildActionButtons(themeProvider),
+                        const SizedBox(height: 30),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -81,7 +86,7 @@ class QueueQrScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQrSection(ThemeProvider themeProvider) {
+  Widget _buildQrSection(BuildContext context, ThemeProvider themeProvider) {
     return Column(
       children: [
         Text(
@@ -95,40 +100,38 @@ class QueueQrScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 30),
-        Builder(
-          builder: (context) => Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Funcionalidad de link proximamente'),
-                    ),
-                  );
-                },
-                child: Icon(
-                  Icons.link,
-                  size: 120,
-                  color: themeProvider.textPrimary,
-                ),
-              ),
-              const SizedBox(width: 20),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, '/big-qr');
-                },
-                child: SizedBox(
-                  width: 120,
-                  height: 120,
-                  child: Image.asset(
-                    'assets/images/mini_qr.png',
-                    fit: BoxFit.contain,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Funcionalidad de link proximamente'),
                   ),
+                );
+              },
+              child: Icon(
+                Icons.link,
+                size: 120,
+                color: themeProvider.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 20),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/big-qr');
+              },
+              child: SizedBox(
+                width: 120,
+                height: 120,
+                child: Image.asset(
+                  'assets/images/mini_qr.png',
+                  fit: BoxFit.contain,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
@@ -148,7 +151,7 @@ class QueueQrScreen extends StatelessWidget {
         ),
         onPressed: () {
           Navigator.pushNamed(
-            context, 
+            context,
             '/management',
             arguments: 'My Queue',
           );
