@@ -64,6 +64,8 @@ flutter:
   assets:
     - assets/images/camara.png
     - assets/images/mcdonalds_logo.jpg
+    - assets/images/big_qr.png
+    - assets/images/mini_qr.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

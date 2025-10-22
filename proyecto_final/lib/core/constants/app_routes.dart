@@ -7,6 +7,7 @@ import 'package:proyecto_final/features/queue/screens/created_queues_screen.dart
 import 'package:proyecto_final/features/queue/screens/create_queue_screen.dart';
 import 'package:proyecto_final/features/queue/screens/queue_qr_screen.dart';
 import 'package:proyecto_final/features/queue/screens/management_screen.dart';
+import 'package:proyecto_final/features/queue/screens/big_qr_screen.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -17,6 +18,7 @@ class AppRoutes {
   static const String createQueue = '/create-queue';
   static const String queueQr = '/queue-qr';
   static const String management = '/management';
+  static const String bigQr = '/big-qr';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -31,6 +33,7 @@ class AppRoutes {
         final queueName = ModalRoute.of(context)!.settings.arguments as String? ?? 'My Queue';
         return ManagementScreen(queueName: queueName);
       },
+      bigQr: (context) => const BigQrScreen(),
     };
   }
 
