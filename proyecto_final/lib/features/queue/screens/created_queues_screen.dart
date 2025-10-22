@@ -214,12 +214,7 @@ class CreatedQueuesScreen extends StatelessWidget {
           elevation: 0,
         ),
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Create queue functionality coming soon'),
-              backgroundColor: themeProvider.backgroundColor,
-            ),
-          );
+          Navigator.pushNamed(context, '/create-queue');
         },
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
