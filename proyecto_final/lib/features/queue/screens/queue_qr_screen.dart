@@ -52,7 +52,7 @@ class QueueQrScreen extends StatelessWidget {
               color: themeProvider.secondaryColor,
             ),
             child: Text(
-              "START A QUEUE",
+              "YOUR QUEUE",
               textAlign: TextAlign.center,
               style: GoogleFonts.ericaOne(
                 color: themeProvider.backgroundColor,
