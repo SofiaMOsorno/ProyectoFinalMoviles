@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
+import 'package:proyecto_final/shared/widgets/edit_profile_modal.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -57,10 +58,11 @@ class AppDrawer extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Edit profile functionality coming soon'),
-                ),
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return const EditProfileModal();
+                },
               );
             },
             icon: Icon(
