@@ -14,98 +14,113 @@ class AppDrawer extends StatelessWidget {
           backgroundColor: themeProvider.primaryColor,
           child: Column(
             children: [
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: themeProvider.secondaryColor,
-                ),
-                child: Center(
-                  child: Text(
-                    'MENU',
-                    style: GoogleFonts.ericaOne(
-                      color: themeProvider.textPrimary,
-                      fontSize: 32,
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    _buildMenuItem(
-                      context,
-                      themeProvider,
-                      'Opcion 1',
-                      Icons.settings,
-                      () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Opcion 1 seleccionada')),
-                        );
-                      },
-                    ),
-                    _buildMenuItem(
-                      context,
-                      themeProvider,
-                      'Opcion 2',
-                      Icons.info,
-                      () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Opcion 2 seleccionada')),
-                        );
-                      },
-                    ),
-                    _buildMenuItem(
-                      context,
-                      themeProvider,
-                      'Opcion 3',
-                      Icons.help,
-                      () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Opcion 3 seleccionada')),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: themeProvider.lightAccent,
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: ListTile(
-                  leading: Icon(
-                    themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                    color: themeProvider.textPrimary,
-                  ),
-                  title: Text(
-                    themeProvider.isDarkMode ? 'Modo Claro' : 'Modo Oscuro',
-                    style: GoogleFonts.lexendDeca(
-                      color: themeProvider.textPrimary,
-                      fontSize: 16,
-                    ),
-                  ),
-                  trailing: Switch(
-                    value: themeProvider.isDarkMode,
-                    onChanged: (value) {
-                      themeProvider.toggleTheme();
-                    },
-                    activeColor: themeProvider.secondaryColor,
-                  ),
-                ),
-              ),
+              _buildProfileHeader(context, themeProvider),
+              _buildMenuItems(context, themeProvider),
+              _buildDarkModeToggle(themeProvider),
               const SizedBox(height: 20),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildProfileHeader(BuildContext context, ThemeProvider themeProvider) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(top: 60, bottom: 30, left: 20, right: 20),
+      decoration: BoxDecoration(
+        color: themeProvider.secondaryColor,
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: themeProvider.primaryColor,
+            child: Text(
+              'A',
+              style: GoogleFonts.ericaOne(
+                color: themeProvider.textPrimary,
+                fontSize: 48,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Alan el platano',
+            style: GoogleFonts.ericaOne(
+              color: themeProvider.primaryColor,
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Edit profile functionality coming soon'),
+                ),
+              );
+            },
+            icon: Icon(
+              Icons.edit,
+              color: themeProvider.secondaryColor,
+              size: 18,
+            ),
+            label: Text(
+              'Editar mis datos',
+              style: GoogleFonts.lexendDeca(
+                color: themeProvider.secondaryColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: themeProvider.textPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItems(BuildContext context, ThemeProvider themeProvider) {
+    return Expanded(
+      child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        children: [
+          _buildMenuItem(
+            context,
+            themeProvider,
+            'Home',
+            Icons.home,
+            () {
+              Navigator.pop(context);
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/',
+                (route) => false,
+              );
+            },
+          ),
+          _buildMenuItem(
+            context,
+            themeProvider,
+            'Created Queues',
+            Icons.star,
+            () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/created-queues');
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -120,15 +135,54 @@ class AppDrawer extends StatelessWidget {
       leading: Icon(
         icon,
         color: themeProvider.textPrimary,
+        size: 28,
       ),
       title: Text(
         title,
         style: GoogleFonts.lexendDeca(
           color: themeProvider.textPrimary,
-          fontSize: 16,
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
         ),
       ),
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+    );
+  }
+
+  Widget _buildDarkModeToggle(ThemeProvider themeProvider) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: themeProvider.lightAccent,
+            width: 1,
+          ),
+        ),
+      ),
+      child: ListTile(
+        leading: Icon(
+          themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+          color: themeProvider.textPrimary,
+          size: 28,
+        ),
+        title: Text(
+          'Dark Mode',
+          style: GoogleFonts.lexendDeca(
+            color: themeProvider.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: Switch(
+          value: themeProvider.isDarkMode,
+          onChanged: (value) {
+            themeProvider.toggleTheme();
+          },
+          activeColor: themeProvider.secondaryColor,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      ),
     );
   }
 }
