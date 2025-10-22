@@ -90,21 +90,45 @@ class _ManagementScreenState extends State<ManagementScreen> {
   Widget _buildQueueList(ThemeProvider themeProvider) {
     return Container(
       color: themeProvider.backgroundColor,
-      child: ListView.builder(
+      child: ReorderableListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         itemCount: _queueMembers.length,
+        proxyDecorator: (child, index, animation) {
+          return AnimatedBuilder(
+            animation: animation,
+            builder: (context, child) {
+              return Material(
+                color: Colors.transparent,
+                elevation: 8,
+                child: child,
+              );
+            },
+            child: child,
+          );
+        },
+        onReorder: (int oldIndex, int newIndex) {
+          setState(() {
+            if (oldIndex < newIndex) {
+              newIndex -= 1;
+            }
+            final Map<String, String> item = _queueMembers.removeAt(oldIndex);
+            _queueMembers.insert(newIndex, item);
+          });
+        },
         itemBuilder: (context, index) {
           return _buildQueueMemberItem(
             themeProvider,
             _queueMembers[index]['name']!,
+            index,
           );
         },
       ),
     );
   }
 
-  Widget _buildQueueMemberItem(ThemeProvider themeProvider, String name) {
+  Widget _buildQueueMemberItem(ThemeProvider themeProvider, String name, int index) {
     return Container(
+      key: ValueKey('$name-$index'),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: themeProvider.secondaryColor,
@@ -120,7 +144,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              Icons.grid_view,
+              Icons.drag_handle,
               color: themeProvider.secondaryColor,
               size: 24,
             ),
