@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 import 'package:proyecto_final/features/queue/screens/edit_queue_screen.dart';
+import 'package:proyecto_final/features/queue/screens/management_screen.dart';
 
 class CreatedQueuesScreen extends StatelessWidget {
   const CreatedQueuesScreen({super.key});
@@ -141,40 +142,50 @@ class CreatedQueuesScreen extends StatelessWidget {
         color: themeProvider.secondaryColor,
         borderRadius: BorderRadius.circular(15),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              queueName,
-              style: GoogleFonts.ericaOne(
-                color: themeProvider.textPrimary,
-                fontSize: 24,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ManagementScreen(queueName: queueName),
+            ),
+          );
+        },
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                queueName,
+                style: GoogleFonts.ericaOne(
+                  color: themeProvider.textPrimary,
+                  fontSize: 24,
+                ),
               ),
             ),
-          ),
-          _buildActionButton(
-            context,
-            themeProvider,
-            Icons.edit,
-            () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditQueueScreen(queueName: queueName),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-          _buildActionButton(
-            context,
-            themeProvider,
-            Icons.delete,
-            () {
-              _showDeleteConfirmationDialog(context, themeProvider, queueName);
-            },
-          ),
-        ],
+            _buildActionButton(
+              context,
+              themeProvider,
+              Icons.edit,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditQueueScreen(queueName: queueName),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            _buildActionButton(
+              context,
+              themeProvider,
+              Icons.delete,
+              () {
+                _showDeleteConfirmationDialog(context, themeProvider, queueName);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
