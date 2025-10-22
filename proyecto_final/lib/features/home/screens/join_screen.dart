@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/features/home/screens/in_queue_screen.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
-import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 
 class JoinScreen extends StatelessWidget {
   const JoinScreen({super.key});
@@ -226,7 +225,6 @@ class JoinScreen extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return Scaffold(
           backgroundColor: themeProvider.backgroundColor,
-          drawer: const AppDrawer(),
           appBar: AppBar(
             backgroundColor: themeProvider.backgroundColor,
             elevation: 0,
@@ -239,14 +237,6 @@ class JoinScreen extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
-            actions: [
-              Builder(
-                builder: (context) => IconButton(
-                  icon: Icon(Icons.menu, color: themeProvider.textPrimary),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
-              ),
-            ],
           ),
           body: InkWell(
             onTap: () {

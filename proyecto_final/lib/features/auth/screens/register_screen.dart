@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/shared/widgets/custom_text_field.dart';
-import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class RegisterScreen extends StatelessWidget {
@@ -15,7 +14,6 @@ class RegisterScreen extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return Scaffold(
           backgroundColor: themeProvider.primaryColor,
-          drawer: const AppDrawer(),
           appBar: AppBar(
             backgroundColor: themeProvider.primaryColor,
             elevation: 0,
@@ -23,14 +21,6 @@ class RegisterScreen extends StatelessWidget {
               icon: Icon(Icons.arrow_back, color: themeProvider.textPrimary),
               onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
             ),
-            actions: [
-              Builder(
-                builder: (context) => IconButton(
-                  icon: Icon(Icons.menu, color: themeProvider.textPrimary),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
-              ),
-            ],
           ),
           body: SingleChildScrollView(
             child: Column(

@@ -90,36 +90,39 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
   Widget _buildHeader(BuildContext context, ThemeProvider themeProvider) {
     return Padding(
       padding: const EdgeInsets.only(top: 60.0),
-      child: Row(
+      child: Stack(
         children: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: Icon(
-                Icons.menu,
-                color: themeProvider.textPrimary,
-                size: 30,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            decoration: BoxDecoration(
+              color: themeProvider.secondaryColor,
+            ),
+            child: Text(
+              "CREATE A QUEUE",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.ericaOne(
+                color: themeProvider.backgroundColor,
+                fontSize: 36,
+                height: 1.0,
               ),
-              onPressed: () => Scaffold.of(context).openDrawer(),
             ),
           ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: BoxDecoration(
-                color: themeProvider.secondaryColor,
-              ),
-              child: Text(
-                "CREATE A QUEUE",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.ericaOne(
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Builder(
+              builder: (context) => IconButton(
+                icon: Icon(
+                  Icons.menu,
                   color: themeProvider.backgroundColor,
-                  fontSize: 36,
-                  height: 1.0,
+                  size: 30,
                 ),
+                onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             ),
           ),
-          const SizedBox(width: 48),
         ],
       ),
     );

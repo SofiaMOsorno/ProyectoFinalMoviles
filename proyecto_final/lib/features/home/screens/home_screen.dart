@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
-import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 import 'package:proyecto_final/features/home/screens/join_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -14,12 +13,6 @@ class HomeScreen extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Scaffold(
-          drawer: const AppDrawer(),
-          appBar: AppBar(
-            backgroundColor: themeProvider.primaryColor,
-            elevation: 0,
-            iconTheme: IconThemeData(color: themeProvider.textPrimary),
-          ),
           body: Column(
             children: [
               Expanded(

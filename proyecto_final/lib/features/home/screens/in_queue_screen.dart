@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
-import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 
 class InQueueScreen extends StatelessWidget {
   final String? userName;
@@ -15,41 +14,24 @@ class InQueueScreen extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return Scaffold(
           backgroundColor: themeProvider.backgroundColor,
-          drawer: const AppDrawer(),
           body: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 80.0),
-                child: Row(
-                  children: [
-                    Builder(
-                      builder: (context) => IconButton(
-                        icon: Icon(
-                          Icons.menu,
-                          color: themeProvider.textPrimary,
-                          size: 30,
-                        ),
-                        onPressed: () => Scaffold.of(context).openDrawer(),
-                      ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  decoration: BoxDecoration(
+                    color: themeProvider.secondaryColor,
+                  ),
+                  child: Text(
+                    "YOUR QUEUE",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.ericaOne(
+                      color: themeProvider.backgroundColor,
+                      fontSize: 43,
                     ),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        decoration: BoxDecoration(
-                          color: themeProvider.secondaryColor,
-                        ),
-                        child: Text(
-                          "YOUR QUEUE",
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.ericaOne(
-                            color: themeProvider.backgroundColor,
-                            fontSize: 43,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 48),
-                  ],
+                  ),
                 ),
               ),
               Expanded(
@@ -146,7 +128,6 @@ class InQueueScreen extends StatelessWidget {
                               elevation: 0,
                             ),
                             onPressed: () {
-                              //
                               showModalBottomSheet(
                                 context: context,
                                 backgroundColor: themeProvider.textField,
@@ -177,7 +158,6 @@ class InQueueScreen extends StatelessWidget {
                                           ),
                                         ),
                                         const SizedBox(height: 12),
-                                        
                                         const SizedBox(height: 20),
                                         ElevatedButton(
                                           style: ElevatedButton.styleFrom(
