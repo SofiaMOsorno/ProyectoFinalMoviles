@@ -55,7 +55,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                     borderRadius: 0,
                     onPressed: () {
-                      Navigator.pushNamed(context, '/created-queues');
+                      Navigator.pushNamed(context, '/login');
                     },
                   ),
                 ),
@@ -81,7 +81,7 @@ class LoginScreen extends StatelessWidget {
                           fontSize: 28,
                         ),
                         onPressed: () {
-                          Navigator.pushNamed(context, '/created-queues');
+                          Navigator.pushNamed(context, '/create-queue');
                         },
                       ),
                       const SizedBox(height: 25),
