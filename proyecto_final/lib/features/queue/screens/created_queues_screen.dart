@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/app_drawer.dart';
+import 'package:proyecto_final/features/queue/screens/edit_queue_screen.dart';
 
 class CreatedQueuesScreen extends StatelessWidget {
   const CreatedQueuesScreen({super.key});
@@ -153,10 +154,10 @@ class CreatedQueuesScreen extends StatelessWidget {
             themeProvider,
             Icons.edit,
             () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Edit $queueName'),
-                  backgroundColor: themeProvider.backgroundColor,
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditQueueScreen(queueName: queueName),
                 ),
               );
             },
