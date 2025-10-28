@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
-            title: 'Virtual Queue App',
+            title: 'Queue Up',
             theme: AppTheme.theme,
             debugShowCheckedModeBanner: false,
             initialRoute: AppRoutes.home,

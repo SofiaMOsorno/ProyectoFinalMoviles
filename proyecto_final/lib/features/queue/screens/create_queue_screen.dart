@@ -292,7 +292,7 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
         Row(
           children: [
             Text(
-              'Would you like\nyour queue to\nvisualize a file?',
+              'Would you like your \nqueue to visualize a file?',
               style: GoogleFonts.lexendDeca(
                 color: themeProvider.secondaryColor,
                 fontSize: 16,
@@ -542,7 +542,7 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
                   'QUEUE CREATED!',
                   style: GoogleFonts.ericaOne(
                     color: themeProvider.secondaryColor,
-                    fontSize: 32,
+                    fontSize: 28,
                   ),
                 ),
                 const SizedBox(height: 12),
