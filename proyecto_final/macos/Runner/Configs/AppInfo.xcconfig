@@ -8,7 +8,7 @@
 PRODUCT_NAME = proyecto_final
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.proyectoFinal
+PRODUCT_BUNDLE_IDENTIFIER = com.proyectofinal.queueup
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 com.proyectofinal All rights reserved.

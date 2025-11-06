@@ -1,4 +1,4 @@
-package com.example.proyecto_final
+package com.proyectofinal.queueup
 
 import io.flutter.embedding.android.FlutterActivity
 
