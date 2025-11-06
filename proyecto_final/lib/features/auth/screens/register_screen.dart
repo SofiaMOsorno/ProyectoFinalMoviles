@@ -76,6 +76,52 @@ class RegisterScreen extends StatelessWidget {
                           );
                         },
                       ),
+                      SizedBox(height: 10),
+                      Text(
+                        "or",
+                        style: TextStyle(
+                          color: themeProvider.textPrimary,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CustomButton(
+                            height: 40,
+                            width: 300,
+                            text: '',
+                            backgroundColor: themeProvider.secondaryColor,
+                            textStyle: GoogleFonts.ericaOne(
+                              color: Colors.transparent,
+                              fontSize: 18,
+                            ),
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/create-queue');
+                            },
+                          ),
+                          IgnorePointer(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'REGISTER WITH ',
+                                  style: GoogleFonts.ericaOne(
+                                    color: themeProvider.textPrimary,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                SizedBox(width: 20,),
+                                Image.asset(
+                                  'assets/images/google_logo.png',
+                                  height: 22,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 15),
                       Text(
                         "Already have an account?",

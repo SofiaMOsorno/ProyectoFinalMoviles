@@ -72,7 +72,7 @@ class LoginScreen extends StatelessWidget {
                         label: 'Password',
                         obscureText: true,
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
                       CustomButton(
                         text: 'Login',
                         backgroundColor: themeProvider.secondaryColor,
@@ -83,6 +83,52 @@ class LoginScreen extends StatelessWidget {
                         onPressed: () {
                           Navigator.pushNamed(context, '/create-queue');
                         },
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "or",
+                        style: TextStyle(
+                          color: themeProvider.textPrimary,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CustomButton(
+                            height: 40,
+                            width: 300,
+                            text: '',
+                            backgroundColor: themeProvider.secondaryColor,
+                            textStyle: GoogleFonts.ericaOne(
+                              color: Colors.transparent,
+                              fontSize: 18,
+                            ),
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/create-queue');
+                            },
+                          ),
+                          IgnorePointer(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'LOGIN WITH ',
+                                  style: GoogleFonts.ericaOne(
+                                    color: themeProvider.textPrimary,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                SizedBox(width: 20,),
+                                Image.asset(
+                                  'assets/images/google_logo.png',
+                                  height: 22,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 25),
                       Text(
