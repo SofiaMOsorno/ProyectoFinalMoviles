@@ -7,13 +7,10 @@ class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Get current user
   User? get currentUser => _auth.currentUser;
 
-  // Stream de autenticación
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Registro con email y contraseña
   Future<UserCredential?> registerWithEmailAndPassword({
     required String email,
     required String password,
@@ -25,10 +22,8 @@ class AuthService {
         password: password,
       );
 
-      // Actualizar el displayName del usuario
       await userCredential.user?.updateDisplayName(username);
 
-      // Guardar información adicional en Firestore
       await _firestore.collection('users').doc(userCredential.user?.uid).set({
         'username': username,
         'email': email,
@@ -44,7 +39,6 @@ class AuthService {
     }
   }
 
-  // Login con email y contraseña
   Future<UserCredential?> signInWithEmailAndPassword({
     required String email,
     required String password,
@@ -62,59 +56,45 @@ class AuthService {
     }
   }
 
-  // Login con Google
   Future<UserCredential?> signInWithGoogle() async {
   try {
-    print('📱 Iniciando Google Sign In...');
     
-    // Trigger the authentication flow con timeout
     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn()
       .timeout(
         const Duration(seconds: 30),
         onTimeout: () {
-          throw 'Tiempo de espera agotado. Intenta nuevamente.';
+          throw 'Time is over. Try again.';
         },
       );
 
     if (googleUser == null) {
-      print('❌ Usuario canceló el login');
       return null;
     }
 
-    print('✅ Google user obtenido: ${googleUser.email}');
-
     final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    print('✅ Google auth obtenido');
 
     final credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
 
-    print('🔥 Iniciando sesión en Firebase...');
     UserCredential userCredential = await _auth.signInWithCredential(credential);
-    print('✅ Firebase login exitoso: ${userCredential.user?.email}');
 
-    // Verificar si es un nuevo usuario y crear documento en Firestore
     if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-      print('📝 Creando documento en Firestore...');
       await _firestore.collection('users').doc(userCredential.user?.uid).set({
         'username': userCredential.user?.displayName ?? 'Usuario',
         'email': userCredential.user?.email,
         'createdAt': FieldValue.serverTimestamp(),
         'profilePicture': userCredential.user?.photoURL,
       });
-      print('✅ Documento creado en Firestore');
     }
 
     return userCredential;
   } catch (e) {
-    print('🔴 ERROR en signInWithGoogle: $e');
-    throw 'Error al iniciar sesión con Google: $e';
+    throw 'Error with Google sign in: $e';
   }
 }
 
-  // Cerrar sesión
   Future<void> signOut() async {
     try {
       await Future.wait([
@@ -122,32 +102,29 @@ class AuthService {
         _googleSignIn.signOut(),
       ]);
     } catch (e) {
-      throw 'Error al cerrar sesión: $e';
+      throw 'Error closing your session: $e';
     }
   }
 
-  // Restablecer contraseña
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      throw 'Error al enviar email de recuperación: $e';
+      throw 'Error sending retreeving email: $e';
     }
   }
 
-  // Obtener datos del usuario desde Firestore
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
       DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
       return doc.data() as Map<String, dynamic>?;
     } catch (e) {
-      throw 'Error al obtener datos del usuario: $e';
+      throw 'Error obtaining user data: $e';
     }
   }
 
-  // Actualizar perfil del usuario
   Future<void> updateUserProfile({
     required String uid,
     String? username,
@@ -162,39 +139,37 @@ class AuthService {
       if (updates.isNotEmpty) {
         await _firestore.collection('users').doc(uid).update(updates);
         
-        // Actualizar también el displayName en Firebase Auth
         if (username != null) {
           await _auth.currentUser?.updateDisplayName(username);
         }
       }
     } catch (e) {
-      throw 'Error al actualizar perfil: $e';
+      throw 'Error updating profile: $e';
     }
   }
 
-  // Manejar excepciones de Firebase Auth
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':
-        return 'La contraseña es demasiado débil. Debe tener al menos 6 caracteres.';
+        return 'Weak password. Must have at least 6 characters.';
       case 'email-already-in-use':
-        return 'Este correo electrónico ya está registrado.';
+        return 'You are trying to use a registered email.';
       case 'invalid-email':
-        return 'El correo electrónico no es válido.';
+        return 'Invalid email.';
       case 'operation-not-allowed':
-        return 'Operación no permitida.';
+        return 'This operation is not allowed.';
       case 'user-disabled':
-        return 'Esta cuenta ha sido deshabilitada.';
+        return 'This account have no permissions anymore.';
       case 'user-not-found':
-        return 'No existe una cuenta con este correo electrónico.';
+        return 'Thee is no account with this email adress.';
       case 'wrong-password':
-        return 'Contraseña incorrecta.';
+        return 'Incorrect Password.';
       case 'invalid-credential':
-        return 'Las credenciales son inválidas.';
+        return 'Invalid credentials.';
       case 'too-many-requests':
-        return 'Demasiados intentos. Por favor, intenta más tarde.';
+        return 'Too many attempts. Try again later.';
       default:
-        return 'Error de autenticación: ${e.message}';
+        return 'Authentication failed: ${e.message}';
     }
   }
 }

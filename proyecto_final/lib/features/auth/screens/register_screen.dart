@@ -34,17 +34,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _emailController.text.trim().isEmpty ||
         _passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
-      _showErrorSnackBar('Por favor completa todos los campos');
+      _showErrorSnackBar('Missing fields');
       return;
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showErrorSnackBar('Las contraseñas no coinciden');
+      _showErrorSnackBar('Passwords dont match');
       return;
     }
 
     if (_passwordController.text.length < 6) {
-      _showErrorSnackBar('La contraseña debe tener al menos 6 caracteres');
+      _showErrorSnackBar('Password must have at least 6 characters');
       return;
     }
 
@@ -97,7 +97,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Color(0xFF6B1D5C),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -164,6 +164,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: _confirmPasswordController,
                             obscureText: true,
                           ),
+                          const SizedBox(height: 15),
+                          _buildUploadSection(context, themeProvider),
                           const SizedBox(height: 30),
                           CustomButton(
                             text: 'Register',
@@ -261,3 +263,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+
+Widget _buildUploadSection(BuildContext context, ThemeProvider themeProvider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Upload profile pic',
+          style: TextStyle(
+            color: themeProvider.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: MediaQuery.of(context).size.width * 0.85,
+          height: 70,
+          decoration: BoxDecoration(
+            color: themeProvider.backgroundColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: InkWell(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('File picker coming soon'),
+                ),
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: themeProvider.lightAccent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.upload_file,
+                    color: themeProvider.backgroundColor,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Text(
+                  'Upload a File',
+                  style: TextStyle(
+                    color: themeProvider.textPrimary,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }

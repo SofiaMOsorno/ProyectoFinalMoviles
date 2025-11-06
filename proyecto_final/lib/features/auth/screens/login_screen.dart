@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleEmailLogin() async {
     if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
-      _showErrorSnackBar('Por favor completa todos los campos');
+      _showErrorSnackBar('Missing fields');
       return;
     }
 
@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: Color(0xFF6B1D5C),
         duration: const Duration(seconds: 3),
       ),
     );
