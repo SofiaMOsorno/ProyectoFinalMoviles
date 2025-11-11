@@ -4,11 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/features/home/screens/in_queue_screen.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
+import 'package:proyecto_final/services/auth_service.dart';
 
 class JoinScreen extends StatelessWidget {
   const JoinScreen({super.key});
 
-  void _showQueueConfirmationDialog(BuildContext context, ThemeProvider themeProvider) {
+  void _showQueueConfirmationDialog(BuildContext context, ThemeProvider themeProvider, AuthService authService) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -62,7 +63,18 @@ class JoinScreen extends StatelessWidget {
                   ),
                   onPressed: () {
                     Navigator.pop(context);
-                    _showNameInputDialog(context, themeProvider);
+                    final currentUser = authService.currentUser;
+                    if (currentUser != null) {
+                      final userName = currentUser.displayName ?? currentUser.email?.split('@')[0] ?? 'User';
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => InQueueScreen(userName: userName),
+                        ),
+                      );
+                    } else {
+                      _showNameInputDialog(context, themeProvider);
+                    }
                   },
                   child: Text(
                     'JOIN',
@@ -221,6 +233,8 @@ class JoinScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Scaffold(
@@ -240,7 +254,7 @@ class JoinScreen extends StatelessWidget {
           ),
           body: InkWell(
             onTap: () {
-              _showQueueConfirmationDialog(context, themeProvider);
+              _showQueueConfirmationDialog(context, themeProvider, authService);
             },
             child: Column(
               children: [

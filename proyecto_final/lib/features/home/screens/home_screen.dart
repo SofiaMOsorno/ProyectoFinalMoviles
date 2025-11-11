@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/features/home/screens/join_screen.dart';
+import 'package:proyecto_final/services/auth_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -10,6 +11,9 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final isAuthenticated = authService.currentUser != null;
+
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Scaffold(
@@ -26,7 +30,7 @@ class HomeScreen extends StatelessWidget {
                         height: 100,
                         width: double.infinity,
                         child: CustomButton(
-                          text: 'Start a Queue',
+                          text: isAuthenticated ? 'Create Queue' : 'Start a Queue',
                           borderRadius: 0,
                           backgroundColor: themeProvider.secondaryColor,
                           textStyle: GoogleFonts.ericaOne(
@@ -34,7 +38,11 @@ class HomeScreen extends StatelessWidget {
                             fontSize: 43,
                           ),
                           onPressed: () {
-                            Navigator.pushNamed(context, '/login');
+                            if (isAuthenticated) {
+                              Navigator.pushNamed(context, '/create-queue');
+                            } else {
+                              Navigator.pushNamed(context, '/login');
+                            }
                           },
                         ),
                       ),
