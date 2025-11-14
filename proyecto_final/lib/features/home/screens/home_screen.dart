@@ -6,23 +6,44 @@ import 'package:proyecto_final/features/home/screens/join_screen.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool expandCreate = false;
+  bool expandJoin = false;
+
+  @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: true);
     final authService = Provider.of<AuthService>(context, listen: false);
+
     final isAuthenticated = authService.currentUser != null;
 
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return Scaffold(
-          body: Column(
-            children: [
-              Expanded(
-                child: Container(
-                  color: themeProvider.primaryColor,
-                  child: Align(
+    final fullHeight = MediaQuery.of(context).size.height;
+    final halfHeight = fullHeight * 0.5;
+
+    return Scaffold(
+      body: Column(
+        children: [
+          // ---------- TOP SECTION (CREATE QUEUE) ----------
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+            height: expandCreate
+                ? fullHeight
+                : expandJoin
+                    ? 0
+                    : halfHeight,
+            width: double.infinity,
+            color: themeProvider.primaryColor,
+            child: expandJoin
+                ? const SizedBox.shrink()
+                : Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 40.0),
@@ -37,23 +58,44 @@ class HomeScreen extends StatelessWidget {
                             color: themeProvider.primaryColor,
                             fontSize: 43,
                           ),
-                          onPressed: () {
+                          onPressed: () async {
+                            setState(() {
+                              expandCreate = true;
+                            });
+
+                            await Future.delayed(
+                                const Duration(milliseconds: 550));
+
                             if (isAuthenticated) {
                               Navigator.pushNamed(context, '/create-queue');
                             } else {
                               Navigator.pushNamed(context, '/login');
                             }
+
+                            setState(() {
+                              expandCreate = false;
+                            });
                           },
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              Expanded(
-                child: Container(
-                  color: themeProvider.backgroundColor,
-                  child: Align(
+          ),
+
+          // ---------- BOTTOM SECTION (JOIN QUEUE) ----------
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+            height: expandJoin
+                ? fullHeight
+                : expandCreate
+                    ? 0
+                    : halfHeight,
+            width: double.infinity,
+            color: themeProvider.backgroundColor,
+            child: expandCreate
+                ? const SizedBox.shrink()
+                : Align(
                     alignment: Alignment.topCenter,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 40.0),
@@ -68,24 +110,32 @@ class HomeScreen extends StatelessWidget {
                             color: themeProvider.backgroundColor,
                             fontSize: 43,
                           ),
-                          onPressed: () {
+                          onPressed: () async {
+                            setState(() {
+                              expandJoin = true;
+                            });
+
+                            await Future.delayed(
+                                const Duration(milliseconds: 550));
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const JoinScreen(),
+                                builder: (_) => const JoinScreen(),
                               ),
                             );
+
+                            setState(() {
+                              expandJoin = false;
+                            });
                           },
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-            ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
