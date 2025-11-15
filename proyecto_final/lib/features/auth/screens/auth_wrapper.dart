@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../services/auth_service.dart';
 import '../../home/screens/home_screen.dart';
+import 'login_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -21,7 +22,11 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        return const HomeScreen();
+        if (snapshot.hasData && snapshot.data != null) {
+          return const HomeScreen();
+        }
+
+        return const LoginScreen();
       },
     );
   }
