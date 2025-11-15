@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/app_drawer.dart';
+import 'package:proyecto_final/services/auth_service.dart';
+import 'package:proyecto_final/services/queue_service.dart';
 
 class CreateQueueScreen extends StatefulWidget {
   const CreateQueueScreen({super.key});
@@ -17,6 +19,7 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
   final TextEditingController _maxPeopleController = TextEditingController(text: '20');
   final TextEditingController _timerController = TextEditingController(text: '60');
   bool _enableNotifications = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -34,52 +37,65 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
         return Scaffold(
           backgroundColor: themeProvider.backgroundColor,
           drawer: const AppDrawer(),
-          body: Column(
+          body: Stack(
             children: [
-              _buildHeader(context, themeProvider),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 10),
-                        _buildTextField(
-                          themeProvider,
-                          'Add a Title for your line*:',
-                          _titleController,
+              Column(
+                children: [
+                  _buildHeader(context, themeProvider),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 10),
+                            _buildTextField(
+                              themeProvider,
+                              'Add a Title for your line*:',
+                              _titleController,
+                            ),
+                            const SizedBox(height: 20),
+                            _buildTextField(
+                              themeProvider,
+                              'Description*:',
+                              _descriptionController,
+                            ),
+                            const SizedBox(height: 20),
+                            _buildNumberField(
+                              themeProvider,
+                              'Maximum people:',
+                              _maxPeopleController,
+                            ),
+                            const SizedBox(height: 20),
+                            _buildNumberField(
+                              themeProvider,
+                              'Timer (seconds):',
+                              _timerController,
+                            ),
+                            const SizedBox(height: 20),
+                            _buildUploadSection(themeProvider),
+                            const SizedBox(height: 20),
+                            _buildNotificationToggle(themeProvider),
+                            const SizedBox(height: 30),
+                            _buildDoneButton(context, themeProvider),
+                            const SizedBox(height: 20),
+                          ],
                         ),
-                        const SizedBox(height: 20),
-                        _buildTextField(
-                          themeProvider,
-                          'Description*:',
-                          _descriptionController,
-                        ),
-                        const SizedBox(height: 20),
-                        _buildNumberField(
-                          themeProvider,
-                          'Maximum people:',
-                          _maxPeopleController,
-                        ),
-                        const SizedBox(height: 20),
-                        _buildNumberField(
-                          themeProvider,
-                          'Timer (seconds):',
-                          _timerController,
-                        ),
-                        const SizedBox(height: 20),
-                        _buildUploadSection(themeProvider),
-                        const SizedBox(height: 20),
-                        _buildNotificationToggle(themeProvider),
-                        const SizedBox(height: 30),
-                        _buildDoneButton(context, themeProvider),
-                        const SizedBox(height: 20),
-                      ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (_isLoading)
+                Container(
+                  color: Colors.black54,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: themeProvider.secondaryColor,
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         );
@@ -452,9 +468,7 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
           ),
           elevation: 0,
         ),
-        onPressed: () {
-          _showSuccessDialog(context, themeProvider);
-        },
+        onPressed: () => _handleCreateQueue(context, themeProvider),
         child: Text(
           'DONE',
           style: GoogleFonts.ericaOne(
@@ -462,6 +476,71 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
             fontSize: 36,
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _handleCreateQueue(BuildContext context, ThemeProvider themeProvider) async {
+    if (_titleController.text.trim().isEmpty) {
+      _showErrorSnackBar('Please enter a title');
+      return;
+    }
+
+    if (_descriptionController.text.trim().isEmpty) {
+      _showErrorSnackBar('Please enter a description');
+      return;
+    }
+
+    final maxPeople = int.tryParse(_maxPeopleController.text) ?? 20;
+    if (maxPeople <= 0) {
+      _showErrorSnackBar('Maximum people must be greater than 0');
+      return;
+    }
+
+    final timerSeconds = int.tryParse(_timerController.text) ?? 60;
+    if (timerSeconds <= 0) {
+      _showErrorSnackBar('Timer must be greater than 0');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final queueService = QueueService();
+
+      final userId = authService.currentUser?.uid;
+      if (userId == null) {
+        throw 'User not authenticated';
+      }
+
+      final queueId = await queueService.createQueue(
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        maxPeople: maxPeople,
+        timerSeconds: timerSeconds,
+        enableNotifications: _enableNotifications,
+        creatorId: userId,
+      );
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSuccessDialog(context, themeProvider, queueId);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showErrorSnackBar(e.toString());
+      }
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -511,9 +590,10 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
     );
   }
 
-  void _showSuccessDialog(BuildContext context, ThemeProvider themeProvider) {
+  void _showSuccessDialog(BuildContext context, ThemeProvider themeProvider, String queueId) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: themeProvider.textField,
@@ -565,7 +645,11 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
                   ),
                   onPressed: () {
                     Navigator.pop(context);
-                    Navigator.pushReplacementNamed(context, '/queue-qr');
+                    Navigator.pushReplacementNamed(
+                      context,
+                      '/queue-qr',
+                      arguments: queueId,
+                    );
                   },
                   child: Text(
                     'OK',

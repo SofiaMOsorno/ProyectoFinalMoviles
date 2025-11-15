@@ -4,9 +4,19 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 import 'package:proyecto_final/features/queue/screens/edit_queue_screen.dart';
+import 'package:proyecto_final/services/auth_service.dart';
+import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/models/queue_model.dart';
 
-class CreatedQueuesScreen extends StatelessWidget {
+class CreatedQueuesScreen extends StatefulWidget {
   const CreatedQueuesScreen({super.key});
+
+  @override
+  State<CreatedQueuesScreen> createState() => _CreatedQueuesScreenState();
+}
+
+class _CreatedQueuesScreenState extends State<CreatedQueuesScreen> {
+  final QueueService _queueService = QueueService();
 
   @override
   Widget build(BuildContext context) {
@@ -68,12 +78,22 @@ class CreatedQueuesScreen extends StatelessWidget {
   }
 
   Widget _buildQueuesList(BuildContext context, ThemeProvider themeProvider) {
-    final List<Map<String, String>> queues = [
-      {'name': 'FAMILY'},
-      {'name': 'COSTCO'},
-      {'name': 'PARTY'},
-      {'name': 'RESTAURANT'},
-    ];
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userId = authService.currentUser?.uid;
+
+    if (userId == null) {
+      return Expanded(
+        child: Center(
+          child: Text(
+            'Please login to view your queues',
+            style: GoogleFonts.lexendDeca(
+              color: themeProvider.textPrimary,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Expanded(
       child: Padding(
@@ -94,17 +114,22 @@ class CreatedQueuesScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: themeProvider.secondaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      'i',
-                      style: GoogleFonts.ericaOne(
-                        color: themeProvider.textPrimary,
-                        fontSize: 14,
+                  GestureDetector(
+                    onTap: () {
+                      _showInfoDialog(context, themeProvider);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: themeProvider.secondaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        'i',
+                        style: GoogleFonts.ericaOne(
+                          color: themeProvider.textPrimary,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -112,13 +137,72 @@ class CreatedQueuesScreen extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: queues.length,
-                itemBuilder: (context, index) {
-                  return _buildQueueItem(
-                    context,
-                    themeProvider,
-                    queues[index]['name']!,
+              child: StreamBuilder<List<QueueModel>>(
+                stream: _queueService.getUserQueues(userId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: themeProvider.secondaryColor,
+                      ),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error loading queues: ${snapshot.error}',
+                        style: GoogleFonts.lexendDeca(
+                          color: Colors.red,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
+
+                  final queues = snapshot.data ?? [];
+
+                  if (queues.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.queue,
+                            size: 80,
+                            color: themeProvider.textPrimary.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No queues yet',
+                            style: GoogleFonts.ericaOne(
+                              color: themeProvider.textPrimary,
+                              fontSize: 24,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Create your first queue to get started!',
+                            style: GoogleFonts.lexendDeca(
+                              color: themeProvider.textPrimary.withOpacity(0.7),
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: queues.length,
+                    itemBuilder: (context, index) {
+                      return _buildQueueItem(
+                        context,
+                        themeProvider,
+                        queues[index],
+                      );
+                    },
                   );
                 },
               ),
@@ -133,7 +217,7 @@ class CreatedQueuesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQueueItem(BuildContext context, ThemeProvider themeProvider, String queueName) {
+  Widget _buildQueueItem(BuildContext context, ThemeProvider themeProvider, QueueModel queue) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -143,17 +227,34 @@ class CreatedQueuesScreen extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.pushNamed(context, '/queue-qr');
+          Navigator.pushNamed(
+            context,
+            '/queue-qr',
+            arguments: queue.id,
+          );
         },
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                queueName,
-                style: GoogleFonts.ericaOne(
-                  color: themeProvider.textPrimary,
-                  fontSize: 24,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    queue.title.toUpperCase(),
+                    style: GoogleFonts.ericaOne(
+                      color: themeProvider.textPrimary,
+                      fontSize: 24,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${queue.currentCount}/${queue.maxPeople} people',
+                    style: GoogleFonts.lexendDeca(
+                      color: themeProvider.textPrimary.withOpacity(0.8),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ),
             _buildActionButton(
@@ -164,7 +265,7 @@ class CreatedQueuesScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => EditQueueScreen(queueName: queueName),
+                    builder: (context) => EditQueueScreen(queueName: queue.title),
                   ),
                 );
               },
@@ -175,7 +276,7 @@ class CreatedQueuesScreen extends StatelessWidget {
               themeProvider,
               Icons.delete,
               () {
-                _showDeleteConfirmationDialog(context, themeProvider, queueName);
+                _showDeleteConfirmationDialog(context, themeProvider, queue);
               },
             ),
           ],
@@ -276,11 +377,11 @@ class CreatedQueuesScreen extends StatelessWidget {
   void _showDeleteConfirmationDialog(
     BuildContext context,
     ThemeProvider themeProvider,
-    String queueName,
+    QueueModel queue,
   ) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return Dialog(
           backgroundColor: themeProvider.textField,
           shape: RoundedRectangleBorder(
@@ -307,7 +408,7 @@ class CreatedQueuesScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Are you sure you want to delete "$queueName"? This action cannot be undone.',
+                  'Are you sure you want to delete "${queue.title}"? This action cannot be undone.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.lexendDeca(
                     color: themeProvider.secondaryColor,
@@ -323,14 +424,28 @@ class CreatedQueuesScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('$queueName deleted'),
-                        backgroundColor: themeProvider.backgroundColor,
-                      ),
-                    );
+                  onPressed: () async {
+                    Navigator.pop(dialogContext);
+                    try {
+                      await _queueService.deleteQueue(queue.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${queue.title} deleted'),
+                            backgroundColor: themeProvider.secondaryColor,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error deleting queue: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
                   },
                   child: Text(
                     'DELETE',
@@ -350,7 +465,7 @@ class CreatedQueuesScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.pop(dialogContext);
                   },
                   child: Text(
                     'CANCEL',
@@ -363,6 +478,50 @@ class CreatedQueuesScreen extends StatelessWidget {
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _showInfoDialog(BuildContext context, ThemeProvider themeProvider) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: themeProvider.textPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: themeProvider.secondaryColor,
+              width: 3,
+            ),
+          ),
+          title: Text(
+            'Your Queues',
+            style: GoogleFonts.ericaOne(
+              color: themeProvider.secondaryColor,
+              fontSize: 24,
+            ),
+          ),
+          content: Text(
+            'Here you can view, edit, and manage all the queues you have created. Tap on a queue to view its QR code.',
+            style: GoogleFonts.lexendDeca(
+              color: themeProvider.backgroundColor,
+              fontSize: 16,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'OK',
+                style: GoogleFonts.ericaOne(
+                  color: themeProvider.secondaryColor,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
