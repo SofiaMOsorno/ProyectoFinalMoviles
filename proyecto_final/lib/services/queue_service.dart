@@ -104,11 +104,10 @@ class QueueService {
     return _firestore
         .collection('queues')
         .where('creatorId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      final queues = snapshot.docs.map((doc) => QueueModel.fromDocument(doc)).toList();
-      queues.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return queues;
+      return snapshot.docs.map((doc) => QueueModel.fromDocument(doc)).toList();
     });
   }
 
@@ -116,11 +115,10 @@ class QueueService {
     return _firestore
         .collection('queues')
         .where('isActive', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      final queues = snapshot.docs.map((doc) => QueueModel.fromDocument(doc)).toList();
-      queues.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return queues;
+      return snapshot.docs.map((doc) => QueueModel.fromDocument(doc)).toList();
     });
   }
 
