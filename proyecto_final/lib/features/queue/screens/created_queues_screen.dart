@@ -265,7 +265,7 @@ class _CreatedQueuesScreenState extends State<CreatedQueuesScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => EditQueueScreen(queueName: queue.title),
+                    builder: (context) => EditQueueScreen(queue: queue),
                   ),
                 );
               },

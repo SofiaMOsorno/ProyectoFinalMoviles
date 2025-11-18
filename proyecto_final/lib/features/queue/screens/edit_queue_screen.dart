@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
+import 'package:proyecto_final/models/queue_model.dart';
+import 'package:proyecto_final/services/queue_service.dart';
 import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 
 class EditQueueScreen extends StatefulWidget {
-  final String queueName;
+  final QueueModel queue;
 
   const EditQueueScreen({
     super.key,
-    required this.queueName,
+    required this.queue,
   });
 
   @override
@@ -17,11 +19,13 @@ class EditQueueScreen extends StatefulWidget {
 }
 
 class _EditQueueScreenState extends State<EditQueueScreen> {
+  final _queueService = QueueService();
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _maxPeopleController;
   late TextEditingController _timerController;
-  bool _enableNotifications = true;
+  late bool _enableNotifications;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -30,37 +34,12 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
   }
 
   void _initializeControllers() {
-    switch (widget.queueName) {
-      case 'FAMILY':
-        _titleController = TextEditingController(text: 'Family Queue');
-        _descriptionController = TextEditingController(text: 'Queue for family events and gatherings');
-        _maxPeopleController = TextEditingController(text: '15');
-        _timerController = TextEditingController(text: '45');
-        break;
-      case 'COSTCO':
-        _titleController = TextEditingController(text: 'Costco Shopping');
-        _descriptionController = TextEditingController(text: 'Queue for Costco shopping trips');
-        _maxPeopleController = TextEditingController(text: '30');
-        _timerController = TextEditingController(text: '90');
-        break;
-      case 'PARTY':
-        _titleController = TextEditingController(text: 'Party Queue');
-        _descriptionController = TextEditingController(text: 'Queue for party entrance');
-        _maxPeopleController = TextEditingController(text: '50');
-        _timerController = TextEditingController(text: '120');
-        break;
-      case 'RESTAURANT':
-        _titleController = TextEditingController(text: 'Restaurant Waiting List');
-        _descriptionController = TextEditingController(text: 'Queue for restaurant seating');
-        _maxPeopleController = TextEditingController(text: '25');
-        _timerController = TextEditingController(text: '60');
-        break;
-      default:
-        _titleController = TextEditingController();
-        _descriptionController = TextEditingController();
-        _maxPeopleController = TextEditingController(text: '20');
-        _timerController = TextEditingController(text: '60');
-    }
+    // Load data from the actual queue object
+    _titleController = TextEditingController(text: widget.queue.title);
+    _descriptionController = TextEditingController(text: widget.queue.description);
+    _maxPeopleController = TextEditingController(text: widget.queue.maxPeople.toString());
+    _timerController = TextEditingController(text: widget.queue.timerSeconds.toString());
+    _enableNotifications = widget.queue.enableNotifications;
   }
 
   @override
@@ -497,18 +476,108 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
           ),
           elevation: 0,
         ),
-        onPressed: () {
-          _showSuccessDialog(context, themeProvider);
-        },
-        child: Text(
-          'SAVE CHANGES',
-          style: GoogleFonts.ericaOne(
-            color: themeProvider.backgroundColor,
-            fontSize: 32,
-          ),
-        ),
+        onPressed: _isLoading ? null : () => _saveChanges(context, themeProvider),
+        child: _isLoading
+            ? SizedBox(
+                height: 30,
+                width: 30,
+                child: CircularProgressIndicator(
+                  color: themeProvider.backgroundColor,
+                  strokeWidth: 3,
+                ),
+              )
+            : Text(
+                'SAVE CHANGES',
+                style: GoogleFonts.ericaOne(
+                  color: themeProvider.backgroundColor,
+                  fontSize: 32,
+                ),
+              ),
       ),
     );
+  }
+
+  Future<void> _saveChanges(BuildContext context, ThemeProvider themeProvider) async {
+    // Validate inputs
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a title'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_descriptionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a description'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final maxPeople = int.tryParse(_maxPeopleController.text);
+    if (maxPeople == null || maxPeople <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a valid number of maximum people'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final timerSeconds = int.tryParse(_timerController.text);
+    if (timerSeconds == null || timerSeconds <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a valid timer value'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Update queue in Firebase
+      await _queueService.updateQueue(
+        queueId: widget.queue.id,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        maxPeople: maxPeople,
+        timerSeconds: timerSeconds,
+        enableNotifications: _enableNotifications,
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Show success dialog
+      if (context.mounted) {
+        _showSuccessDialog(context, themeProvider);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update queue: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _showInfoDialog(String title) {
