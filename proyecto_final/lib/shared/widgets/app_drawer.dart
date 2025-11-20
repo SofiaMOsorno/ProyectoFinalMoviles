@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/edit_profile_modal.dart';
 import 'package:proyecto_final/services/auth_service.dart';
+import 'package:proyecto_final/services/profile_picture_service.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -31,6 +33,7 @@ class AppDrawer extends StatelessWidget {
   Widget _buildProfileHeader(BuildContext context, ThemeProvider themeProvider) {
     final authService = Provider.of<AuthService>(context, listen: false);
     final user = authService.currentUser;
+    final pictureService = ProfilePictureService();
 
     return Container(
       width: double.infinity,
@@ -39,11 +42,12 @@ class AppDrawer extends StatelessWidget {
         color: themeProvider.secondaryColor,
       ),
       child: FutureBuilder<Map<String, dynamic>?>(
-        future: user != null ? authService.getUserData(user.uid) : null,
+        future: user != null ? _getUserDataWithLocalPicture(authService, pictureService, user.uid) : null,
         builder: (context, snapshot) {
           final userData = snapshot.data;
           final username = userData?['username'] ?? user?.displayName ?? 'User';
           final email = user?.email ?? '';
+          final localPicturePath = userData?['localPicturePath'] as String?;
           final profilePicture = userData?['profilePicture'] ?? user?.photoURL;
           final firstLetter = username.isNotEmpty ? username[0].toUpperCase() : 'U';
 
@@ -52,8 +56,8 @@ class AppDrawer extends StatelessWidget {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: themeProvider.primaryColor,
-                backgroundImage: profilePicture != null ? NetworkImage(profilePicture) : null,
-                child: profilePicture == null
+                backgroundImage: _getProfileImage(localPicturePath, profilePicture),
+                child: (localPicturePath == null && profilePicture == null)
                     ? Text(
                         firstLetter,
                         style: GoogleFonts.ericaOne(
@@ -269,5 +273,35 @@ class AppDrawer extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       ),
     );
+  }
+
+  Future<Map<String, dynamic>?> _getUserDataWithLocalPicture(
+    AuthService authService,
+    ProfilePictureService pictureService,
+    String uid,
+  ) async {
+    final userData = await authService.getUserData(uid);
+    final localPicturePath = await pictureService.getLocalProfilePicturePath(uid);
+
+    if (userData != null) {
+      return {
+        ...userData,
+        'localPicturePath': localPicturePath,
+      };
+    }
+
+    return {'localPicturePath': localPicturePath};
+  }
+
+  ImageProvider? _getProfileImage(String? localPath, String? networkUrl) {
+    if (localPath != null) {
+      return FileImage(File(localPath));
+    }
+
+    if (networkUrl != null) {
+      return NetworkImage(networkUrl);
+    }
+
+    return null;
   }
 }

@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
+import 'package:proyecto_final/services/auth_service.dart';
+import 'package:proyecto_final/services/profile_picture_service.dart';
 
 class EditProfileModal extends StatefulWidget {
   const EditProfileModal({super.key});
@@ -11,13 +14,210 @@ class EditProfileModal extends StatefulWidget {
 }
 
 class _EditProfileModalState extends State<EditProfileModal> {
-  final TextEditingController _nameController = TextEditingController(text: 'Alan');
-  bool _hasUploadedImage = false;
+  final TextEditingController _nameController = TextEditingController();
+  final ProfilePictureService _pictureService = ProfilePictureService();
+
+  File? _selectedImage;
+  bool _isLoadingName = false;
+  bool _isLoadingPicture = false;
+  String _currentUsername = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUserData();
+  }
+
+  Future<void> _loadCurrentUserData() async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = authService.currentUser;
+
+    if (user != null) {
+      final userData = await authService.getUserData(user.uid);
+      setState(() {
+        _currentUsername = userData?['username'] ?? user.displayName ?? 'User';
+        _nameController.text = _currentUsername;
+      });
+    }
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final source = await _showImageSourceDialog();
+      if (source == null) return;
+
+      File? image;
+      if (source == ImageSource.gallery) {
+        image = await _pictureService.pickImageFromGallery();
+      } else {
+        image = await _pictureService.pickImageFromCamera();
+      }
+
+      if (image != null) {
+        setState(() {
+          _selectedImage = image;
+        });
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error selecting image: $e');
+    }
+  }
+
+  Future<ImageSource?> _showImageSourceDialog() async {
+    return showDialog<ImageSource>(
+      context: context,
+      builder: (BuildContext context) {
+        final themeProvider = Provider.of<ThemeProvider>(context);
+        return AlertDialog(
+          backgroundColor: themeProvider.textField,
+          title: Text(
+            'Select image from',
+            style: GoogleFonts.lexendDeca(
+              color: themeProvider.secondaryColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.photo_library, color: themeProvider.secondaryColor),
+                title: Text(
+                  'Gallery',
+                  style: GoogleFonts.lexendDeca(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: Icon(Icons.camera_alt, color: themeProvider.secondaryColor),
+                title: Text(
+                  'Camera',
+                  style: GoogleFonts.lexendDeca(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _updateUsername() async {
+    final newUsername = _nameController.text.trim();
+
+    if (newUsername.isEmpty) {
+      _showErrorSnackBar('Name cannot be empty');
+      return;
+    }
+
+    if (newUsername == _currentUsername) {
+      _showErrorSnackBar('Name is the same');
+      return;
+    }
+
+    setState(() => _isLoadingName = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final user = authService.currentUser;
+
+      if (user != null) {
+        await authService.updateUserProfile(
+          uid: user.uid,
+          username: newUsername,
+        );
+
+        setState(() {
+          _currentUsername = newUsername;
+        });
+
+        if (mounted) {
+          _showSuccessSnackBar('Name updated successfully');
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            Navigator.pop(context);
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackBar('Error updating name: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingName = false);
+      }
+    }
+  }
+
+  Future<void> _updateProfilePicture() async {
+    if (_selectedImage == null) {
+      _showErrorSnackBar('No image selected');
+      return;
+    }
+
+    setState(() => _isLoadingPicture = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final user = authService.currentUser;
+
+      if (user != null) {
+        await _pictureService.saveProfilePicture(_selectedImage!, user.uid);
+
+        if (mounted) {
+          _showSuccessSnackBar('Profile picture updated successfully');
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            Navigator.pop(context);
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackBar('Error updating picture: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingPicture = false);
+      }
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF6B1D5C),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -124,19 +324,25 @@ class _EditProfileModalState extends State<EditProfileModal> {
                   color: themeProvider.secondaryColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: IconButton(
-                  icon: const Icon(Icons.check),
-                  color: themeProvider.textPrimary,
-                  iconSize: 28,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Name update functionality coming soon'),
+                child: _isLoadingName
+                    ? Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: themeProvider.textPrimary,
+                          ),
+                        ),
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.check),
+                        color: themeProvider.textPrimary,
+                        iconSize: 28,
+                        onPressed: _updateUsername,
+                        padding: const EdgeInsets.all(8),
                       ),
-                    );
-                  },
-                  padding: const EdgeInsets.all(8),
-                ),
               ),
             ],
           ),
@@ -158,6 +364,47 @@ class _EditProfileModalState extends State<EditProfileModal> {
           ),
         ),
         const SizedBox(height: 8),
+        if (_selectedImage != null) ...[
+          Center(
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(
+                    _selectedImage!,
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: 5,
+                  right: 5,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedImage = null;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         Container(
           decoration: BoxDecoration(
             color: themeProvider.backgroundColor,
@@ -171,16 +418,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
             children: [
               Expanded(
                 child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _hasUploadedImage = true;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('File picker functionality coming soon'),
-                      ),
-                    );
-                  },
+                  onTap: _pickImage,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -202,7 +440,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
                         ),
                         const SizedBox(width: 14),
                         Text(
-                          'Upload a File',
+                          _selectedImage == null ? 'Upload a File' : 'Change File',
                           style: GoogleFonts.lexendDeca(
                             color: themeProvider.textPrimary,
                             fontSize: 16,
@@ -217,26 +455,30 @@ class _EditProfileModalState extends State<EditProfileModal> {
               Container(
                 margin: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: _hasUploadedImage
+                  color: _selectedImage != null
                       ? themeProvider.secondaryColor
                       : themeProvider.lightAccent.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: IconButton(
-                  icon: const Icon(Icons.check),
-                  color: themeProvider.textPrimary,
-                  iconSize: 28,
-                  onPressed: _hasUploadedImage
-                      ? () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Picture update functionality coming soon'),
-                            ),
-                          );
-                        }
-                      : null,
-                  padding: const EdgeInsets.all(8),
-                ),
+                child: _isLoadingPicture
+                    ? Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: themeProvider.textPrimary,
+                          ),
+                        ),
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.check),
+                        color: themeProvider.textPrimary,
+                        iconSize: 28,
+                        onPressed: _selectedImage != null ? _updateProfilePicture : null,
+                        padding: const EdgeInsets.all(8),
+                      ),
               ),
             ],
           ),
@@ -271,3 +513,5 @@ class _EditProfileModalState extends State<EditProfileModal> {
     );
   }
 }
+
+enum ImageSource { gallery, camera }
