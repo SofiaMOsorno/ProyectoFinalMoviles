@@ -1,18 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/features/home/screens/in_queue_screen.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 
-class JoinScreen extends StatelessWidget {
+class JoinScreen extends StatefulWidget {
   const JoinScreen({super.key});
 
-  void _showQueueConfirmationDialog(BuildContext context, ThemeProvider themeProvider, AuthService authService) {
+  @override
+  State<JoinScreen> createState() => _JoinScreenState();
+}
+
+class _JoinScreenState extends State<JoinScreen> {
+  MobileScannerController cameraController = MobileScannerController();
+  bool _isProcessing = false;
+
+  @override
+  void dispose() {
+    cameraController.dispose();
+    super.dispose();
+  }
+
+  void _onQRCodeDetected(BarcodeCapture capture, BuildContext context) {
+    if (_isProcessing) return;
+
+    final List<Barcode> barcodes = capture.barcodes;
+    if (barcodes.isEmpty) return;
+
+    final String? qrCode = barcodes.first.rawValue;
+    if (qrCode == null || qrCode.isEmpty) return;
+
+    setState(() => _isProcessing = true);
+
+    cameraController.stop();
+
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final authService = Provider.of<AuthService>(context, listen: false);
+
+    _showQueueConfirmationDialog(context, themeProvider, authService, qrCode);
+  }
+
+  void _showQueueConfirmationDialog(
+    BuildContext context,
+    ThemeProvider themeProvider,
+    AuthService authService,
+    String qrCode,
+  ) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
         return Dialog(
           backgroundColor: themeProvider.textField,
           shape: RoundedRectangleBorder(
@@ -52,6 +92,15 @@ class JoinScreen extends StatelessWidget {
                     fontSize: 20,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'Queue ID: ${qrCode.substring(0, qrCode.length > 8 ? 8 : qrCode.length)}',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lexendDeca(
+                    color: themeProvider.secondaryColor.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -62,10 +111,12 @@ class JoinScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.pop(dialogContext);
                     final currentUser = authService.currentUser;
                     if (currentUser != null) {
-                      final userName = currentUser.displayName ?? currentUser.email?.split('@')[0] ?? 'User';
+                      final userName = currentUser.displayName ??
+                          currentUser.email?.split('@')[0] ??
+                          'User';
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -73,7 +124,7 @@ class JoinScreen extends StatelessWidget {
                         ),
                       );
                     } else {
-                      _showNameInputDialog(context, themeProvider);
+                      _showNameInputDialog(context, themeProvider, qrCode);
                     }
                   },
                   child: Text(
@@ -94,7 +145,9 @@ class JoinScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.pop(dialogContext);
+                    setState(() => _isProcessing = false);
+                    cameraController.start();
                   },
                   child: Text(
                     'CANCEL',
@@ -109,15 +162,24 @@ class JoinScreen extends StatelessWidget {
           ),
         );
       },
-    );
+    ).then((_) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    });
   }
 
-  void _showNameInputDialog(BuildContext context, ThemeProvider themeProvider) {
+  void _showNameInputDialog(
+    BuildContext context,
+    ThemeProvider themeProvider,
+    String qrCode,
+  ) {
     final TextEditingController nameController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
         return Dialog(
           backgroundColor: themeProvider.textField,
           shape: RoundedRectangleBorder(
@@ -186,7 +248,7 @@ class JoinScreen extends StatelessWidget {
                   onPressed: () {
                     final name = nameController.text.trim();
                     if (name.isNotEmpty) {
-                      Navigator.pop(context);
+                      Navigator.pop(dialogContext);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -213,7 +275,9 @@ class JoinScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.pop(dialogContext);
+                    setState(() => _isProcessing = false);
+                    cameraController.start();
                   },
                   child: Text(
                     'CANCEL',
@@ -228,13 +292,15 @@ class JoinScreen extends StatelessWidget {
           ),
         );
       },
-    );
+    ).then((_) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context, listen: false);
-
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Scaffold(
@@ -252,39 +318,75 @@ class JoinScreen extends StatelessWidget {
               },
             ),
           ),
-          body: InkWell(
-            onTap: () {
-              _showQueueConfirmationDialog(context, themeProvider, authService);
-            },
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: SizedBox(
-                    height: 100,
-                    width: double.infinity,
-                    child: CustomButton(
-                      text: 'JOIN A QUEUE',
-                      borderRadius: 0,
-                      backgroundColor: themeProvider.secondaryColor,
-                      textStyle: GoogleFonts.ericaOne(
-                        color: themeProvider.backgroundColor,
-                        fontSize: 43,
-                      ),
-                      onPressed: () {},
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0),
+                child: SizedBox(
+                  height: 100,
+                  width: double.infinity,
+                  child: CustomButton(
+                    text: 'JOIN A QUEUE',
+                    borderRadius: 0,
+                    backgroundColor: themeProvider.secondaryColor,
+                    textStyle: GoogleFonts.ericaOne(
+                      color: themeProvider.backgroundColor,
+                      fontSize: 43,
                     ),
+                    onPressed: () {},
                   ),
                 ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: Image.asset(
-                    'assets/images/camara.png',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: Stack(
+                  children: [
+                    MobileScanner(
+                      controller: cameraController,
+                      onDetect: (capture) => _onQRCodeDetected(capture, context),
+                    ),
+                    Center(
+                      child: Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: themeProvider.secondaryColor,
+                            width: 3,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 20,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Text(
+                            'Align QR code within the frame',
+                            style: GoogleFonts.lexendDeca(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
