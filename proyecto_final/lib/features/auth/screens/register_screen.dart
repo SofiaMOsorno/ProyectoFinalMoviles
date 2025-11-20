@@ -114,7 +114,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             elevation: 0,
             leading: IconButton(
               icon: Icon(Icons.arrow_back, color: themeProvider.textPrimary),
-              onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushReplacementNamed(context, '/');
+                }
+              },
             ),
           ),
           body: Stack(

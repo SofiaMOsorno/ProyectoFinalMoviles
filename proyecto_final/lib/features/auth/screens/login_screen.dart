@@ -89,16 +89,21 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return Scaffold(
-          backgroundColor: themeProvider.primaryColor,
-          appBar: AppBar(
+        return WillPopScope(
+          onWillPop: () async {
+            Navigator.pushReplacementNamed(context, '/');
+            return false;
+          },
+          child: Scaffold(
             backgroundColor: themeProvider.primaryColor,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: themeProvider.textPrimary),
-              onPressed: () => Navigator.pop(context),
+            appBar: AppBar(
+              backgroundColor: themeProvider.primaryColor,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: themeProvider.textPrimary),
+                onPressed: () => Navigator.pushReplacementNamed(context, '/'),
+              ),
             ),
-          ),
           body: Stack(
             children: [
               SingleChildScrollView(
@@ -243,6 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
             ],
+          ),
           ),
         );
       },
