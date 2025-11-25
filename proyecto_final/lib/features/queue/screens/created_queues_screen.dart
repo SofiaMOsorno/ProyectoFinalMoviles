@@ -7,6 +7,7 @@ import 'package:proyecto_final/features/queue/screens/edit_queue_screen.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/services/queue_service.dart';
 import 'package:proyecto_final/models/queue_model.dart';
+import 'package:proyecto_final/models/queue_member_model.dart';
 
 class CreatedQueuesScreen extends StatefulWidget {
   const CreatedQueuesScreen({super.key});
@@ -247,12 +248,18 @@ class _CreatedQueuesScreenState extends State<CreatedQueuesScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    '${queue.currentCount}/${queue.maxPeople} people',
-                    style: GoogleFonts.lexendDeca(
-                      color: themeProvider.textPrimary.withOpacity(0.8),
-                      fontSize: 14,
-                    ),
+                  StreamBuilder<List<QueueMemberModel>>(
+                    stream: _queueService.getQueueMembers(queue.id),
+                    builder: (context, memberSnapshot) {
+                      final realCount = memberSnapshot.data?.length ?? queue.currentCount;
+                      return Text(
+                        '$realCount/${queue.maxPeople} people',
+                        style: GoogleFonts.lexendDeca(
+                          color: themeProvider.textPrimary.withOpacity(0.8),
+                          fontSize: 14,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
