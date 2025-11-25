@@ -262,8 +262,11 @@ class _InQueueScreenState extends State<InQueueScreen> {
 
                             if (context.mounted) {
                               Navigator.pop(modalContext);
-                              Navigator.pop(context);
-                              Navigator.pop(context);
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/',
+                                (route) => false,
+                              );
                             }
                           } catch (e) {
                             if (context.mounted) {
