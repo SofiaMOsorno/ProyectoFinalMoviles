@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
-import 'package:proyecto_final/shared/widgets/app_drawer.dart';
 import 'package:proyecto_final/shared/widgets/qr_code_widget.dart';
 import 'package:proyecto_final/features/queue/screens/big_qr_screen.dart';
 
@@ -20,7 +19,6 @@ class QueueQrScreen extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return Scaffold(
           backgroundColor: themeProvider.backgroundColor,
-          drawer: const AppDrawer(),
           body: Column(
             children: [
               _buildHeader(context, themeProvider),
@@ -72,14 +70,15 @@ class QueueQrScreen extends StatelessWidget {
             left: 0,
             top: 0,
             bottom: 0,
-            child: Builder(
-              builder: (context) => IconButton(
-                icon: Icon(
-                  Icons.menu,
-                  color: themeProvider.backgroundColor,
-                  size: 30,
-                ),
-                onPressed: () => Scaffold.of(context).openDrawer(),
+            child: IconButton(
+              icon: Icon(
+                Icons.arrow_back,
+                color: themeProvider.backgroundColor,
+                size: 30,
+              ),
+              onPressed: () => Navigator.pushReplacementNamed(
+                context,
+                '/created-queues',
               ),
             ),
           ),
