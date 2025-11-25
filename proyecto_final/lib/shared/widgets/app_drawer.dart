@@ -42,12 +42,13 @@ class AppDrawer extends StatelessWidget {
         color: themeProvider.secondaryColor,
       ),
       child: FutureBuilder<Map<String, dynamic>?>(
-        future: user != null ? _getUserDataWithLocalPicture(authService, pictureService, user.uid) : null,
+        future: user != null ? _getUserDataWithPicture(authService, pictureService, user.uid) : null,
         builder: (context, snapshot) {
           final userData = snapshot.data;
           final username = userData?['username'] ?? user?.displayName ?? 'User';
           final email = user?.email ?? '';
-          final localPicturePath = userData?['localPicturePath'] as String?;
+          final pictureType = userData?['pictureType'] as String?;
+          final picturePath = userData?['picturePath'] as String?;
           final profilePicture = userData?['profilePicture'] ?? user?.photoURL;
           final firstLetter = username.isNotEmpty ? username[0].toUpperCase() : 'U';
 
@@ -56,8 +57,8 @@ class AppDrawer extends StatelessWidget {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: themeProvider.primaryColor,
-                backgroundImage: _getProfileImage(localPicturePath, profilePicture),
-                child: (localPicturePath == null && profilePicture == null)
+                backgroundImage: _getProfileImage(pictureType, picturePath, profilePicture),
+                child: (pictureType == null && picturePath == null && profilePicture == null)
                     ? Text(
                         firstLetter,
                         style: GoogleFonts.ericaOne(
@@ -275,27 +276,35 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Future<Map<String, dynamic>?> _getUserDataWithLocalPicture(
+  Future<Map<String, dynamic>?> _getUserDataWithPicture(
     AuthService authService,
     ProfilePictureService pictureService,
     String uid,
   ) async {
     final userData = await authService.getUserData(uid);
-    final localPicturePath = await pictureService.getLocalProfilePicturePath(uid);
+    final pictureData = await pictureService.getProfilePicturePath(uid);
 
     if (userData != null) {
       return {
         ...userData,
-        'localPicturePath': localPicturePath,
+        'pictureType': pictureData['type'],
+        'picturePath': pictureData['path'],
       };
     }
 
-    return {'localPicturePath': localPicturePath};
+    return {
+      'pictureType': pictureData['type'],
+      'picturePath': pictureData['path'],
+    };
   }
 
-  ImageProvider? _getProfileImage(String? localPath, String? networkUrl) {
-    if (localPath != null) {
-      return FileImage(File(localPath));
+  ImageProvider? _getProfileImage(String? pictureType, String? picturePath, String? networkUrl) {
+    if (pictureType == 'preset' && picturePath != null) {
+      return AssetImage(picturePath);
+    }
+
+    if (pictureType == 'local' && picturePath != null) {
+      return FileImage(File(picturePath));
     }
 
     if (networkUrl != null) {

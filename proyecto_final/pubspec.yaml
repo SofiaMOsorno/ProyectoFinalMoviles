@@ -45,6 +45,15 @@ flutter:
     - assets/images/big_qr.png
     - assets/images/mini_qr.png
     - assets/images/google_logo.png
+    - assets/images/profile_pic/l1.png
+    - assets/images/profile_pic/m1.png
+    - assets/images/profile_pic/m2.png
+    - assets/images/profile_pic/m3.png
+    - assets/images/profile_pic/m4.png
+    - assets/images/profile_pic/m5.png
+    - assets/images/profile_pic/m6.png
+    - assets/images/profile_pic/m7.png
+    - assets/images/profile_pic/m8.png
 
   
 flutter_icons:

@@ -18,6 +18,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
   final ProfilePictureService _pictureService = ProfilePictureService();
 
   File? _selectedImage;
+  String? _selectedPresetImage;
   bool _isLoadingName = false;
   bool _isLoadingPicture = false;
   String _currentUsername = '';
@@ -34,9 +35,11 @@ class _EditProfileModalState extends State<EditProfileModal> {
 
     if (user != null) {
       final userData = await authService.getUserData(user.uid);
+      final currentPreset = await _pictureService.getCurrentPresetImage(user.uid);
       setState(() {
         _currentUsername = userData?['username'] ?? user.displayName ?? 'User';
         _nameController.text = _currentUsername;
+        _selectedPresetImage = currentPreset;
       });
     }
   }
@@ -62,6 +65,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
       if (image != null) {
         setState(() {
           _selectedImage = image;
+          _selectedPresetImage = null; // Limpiar selección de preset
         });
       }
     } catch (e) {
@@ -167,7 +171,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
   }
 
   Future<void> _updateProfilePicture() async {
-    if (_selectedImage == null) {
+    if (_selectedImage == null && _selectedPresetImage == null) {
       _showErrorSnackBar('No image selected');
       return;
     }
@@ -179,7 +183,13 @@ class _EditProfileModalState extends State<EditProfileModal> {
       final user = authService.currentUser;
 
       if (user != null) {
-        await _pictureService.saveProfilePicture(_selectedImage!, user.uid);
+        if (_selectedImage != null) {
+          // Guardar imagen personalizada
+          await _pictureService.saveProfilePicture(_selectedImage!, user.uid);
+        } else if (_selectedPresetImage != null) {
+          // Guardar imagen preestablecida
+          await _pictureService.savePresetProfilePicture(_selectedPresetImage!, user.uid);
+        }
 
         if (mounted) {
           _showSuccessSnackBar('Profile picture updated successfully');
@@ -265,6 +275,8 @@ class _EditProfileModalState extends State<EditProfileModal> {
                   _buildNameField(themeProvider),
                   const SizedBox(height: 20),
                   _buildPictureUpload(themeProvider),
+                  const SizedBox(height: 16),
+                  _buildPresetImageSelector(themeProvider),
                   const SizedBox(height: 24),
                   _buildCancelButton(context, themeProvider),
                   const SizedBox(height: 8),
@@ -356,7 +368,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'New Picture',
+          'Upload Custom Picture',
           style: GoogleFonts.lexendDeca(
             color: themeProvider.secondaryColor,
             fontSize: 16,
@@ -388,11 +400,11 @@ class _EditProfileModalState extends State<EditProfileModal> {
                     },
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.red,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.close,
                         color: Colors.white,
                         size: 20,
@@ -455,7 +467,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
               Container(
                 margin: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: _selectedImage != null
+                  color: (_selectedImage != null || _selectedPresetImage != null)
                       ? themeProvider.secondaryColor
                       : themeProvider.lightAccent.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(8),
@@ -476,11 +488,88 @@ class _EditProfileModalState extends State<EditProfileModal> {
                         icon: const Icon(Icons.check),
                         color: themeProvider.textPrimary,
                         iconSize: 28,
-                        onPressed: _selectedImage != null ? _updateProfilePicture : null,
+                        onPressed: (_selectedImage != null || _selectedPresetImage != null) 
+                            ? _updateProfilePicture 
+                            : null,
                         padding: const EdgeInsets.all(8),
                       ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPresetImageSelector(ThemeProvider themeProvider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Or Choose a Preset Image',
+          style: GoogleFonts.lexendDeca(
+            color: themeProvider.secondaryColor,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 100,
+          child: Scrollbar(
+            thumbVisibility: true,
+            thickness: 8,
+            radius: const Radius.circular(10),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: ProfilePictureService.presetImages.length,
+              padding: const EdgeInsets.only(bottom: 10),
+              itemBuilder: (context, index) {
+                final imagePath = ProfilePictureService.presetImages[index];
+                final isSelected = _selectedPresetImage == imagePath;
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedPresetImage = imagePath;
+                      _selectedImage = null;
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected 
+                            ? themeProvider.secondaryColor 
+                            : themeProvider.lightAccent,
+                        width: isSelected ? 4 : 2,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        imagePath,
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 80,
+                            height: 80,
+                            color: themeProvider.lightAccent,
+                            child: Icon(
+                              Icons.person,
+                              size: 40,
+                              color: themeProvider.secondaryColor,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ],
