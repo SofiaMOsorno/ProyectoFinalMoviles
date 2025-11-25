@@ -166,7 +166,10 @@ class QueueQrScreen extends StatelessWidget {
           Navigator.pushNamed(
             context,
             '/management',
-            arguments: 'My Queue',
+            arguments: {
+              'queueName': 'My Queue',
+              'queueId': queueId,
+            },
           );
         },
         child: Text(

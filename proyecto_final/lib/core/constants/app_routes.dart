@@ -34,8 +34,13 @@ class AppRoutes {
         return AuthGuard(child: QueueQrScreen(queueId: queueId));
       },
       management: (context) {
-        final queueName = ModalRoute.of(context)!.settings.arguments as String? ?? 'My Queue';
-        return AuthGuard(child: ManagementScreen(queueName: queueName));
+        final args = ModalRoute.of(context)!.settings.arguments as Map<String, String>;
+        return AuthGuard(
+          child: ManagementScreen(
+            queueName: args['queueName'] ?? 'My Queue',
+            queueId: args['queueId']!,
+          ),
+        );
       },
       bigQr: (context) {
         final queueId = ModalRoute.of(context)!.settings.arguments as String;

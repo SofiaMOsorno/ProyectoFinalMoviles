@@ -5,10 +5,12 @@ import 'package:proyecto_final/core/theme/theme_provider.dart';
 
 class ManagementScreen extends StatefulWidget {
   final String queueName;
+  final String queueId;
 
   const ManagementScreen({
     super.key,
     required this.queueName,
+    required this.queueId,
   });
 
   @override
@@ -246,10 +248,10 @@ class _ManagementScreenState extends State<ManagementScreen> {
   Widget _buildSeeQRButton(ThemeProvider themeProvider) {
     return InkWell(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('QR code functionality coming soon'),
-          ),
+        Navigator.pushNamed(
+          context,
+          '/queue-qr',
+          arguments: widget.queueId,
         );
       },
       child: Text(
