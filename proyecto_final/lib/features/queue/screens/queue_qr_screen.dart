@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
@@ -105,12 +106,20 @@ class QueueQrScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             GestureDetector(
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Funcionalidad de link proximamente'),
-                  ),
-                );
+              onTap: () async {
+                await Clipboard.setData(ClipboardData(text: queueId));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Queue ID copied to clipboard!',
+                        style: GoogleFonts.lexendDeca(),
+                      ),
+                      backgroundColor: themeProvider.secondaryColor,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
               },
               child: Icon(
                 Icons.link,

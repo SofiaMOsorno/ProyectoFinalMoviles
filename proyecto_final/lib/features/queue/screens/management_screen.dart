@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
+import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/models/queue_member_model.dart';
 
 class ManagementScreen extends StatefulWidget {
   final String queueName;
@@ -18,14 +20,8 @@ class ManagementScreen extends StatefulWidget {
 }
 
 class _ManagementScreenState extends State<ManagementScreen> {
+  final QueueService _queueService = QueueService();
   bool _showUsernames = false;
-
-  final List<Map<String, String>> _queueMembers = [
-    {'name': 'Hermenegildo'},
-    {'name': 'Batraclo'},
-    {'name': 'Gerbacio'},
-    {'name': 'Herculano'},
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -37,14 +33,41 @@ class _ManagementScreenState extends State<ManagementScreen> {
             children: [
               _buildHeader(context, themeProvider),
               Expanded(
-                child: Column(
-                  children: [
-                    _buildQueueInfo(themeProvider),
-                    Expanded(
-                      child: _buildQueueList(themeProvider),
-                    ),
-                    _buildBottomControls(context, themeProvider),
-                  ],
+                child: StreamBuilder<List<QueueMemberModel>>(
+                  stream: _queueService.getQueueMembers(widget.queueId),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: themeProvider.secondaryColor,
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Error loading members',
+                          style: GoogleFonts.lexendDeca(
+                            color: themeProvider.textPrimary,
+                            fontSize: 18,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final members = snapshot.data ?? [];
+
+                    return Column(
+                      children: [
+                        _buildQueueInfo(themeProvider, members.length),
+                        Expanded(
+                          child: _buildQueueList(themeProvider, members),
+                        ),
+                        _buildBottomControls(context, themeProvider),
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -73,13 +96,13 @@ class _ManagementScreenState extends State<ManagementScreen> {
     );
   }
 
-  Widget _buildQueueInfo(ThemeProvider themeProvider) {
+  Widget _buildQueueInfo(ThemeProvider themeProvider, int memberCount) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       color: themeProvider.backgroundColor,
       child: Text(
-        'People in your queue (${_queueMembers.length}/3)',
+        'People in your queue: $memberCount',
         style: GoogleFonts.lexendDeca(
           color: themeProvider.secondaryColor,
           fontSize: 16,
@@ -89,12 +112,24 @@ class _ManagementScreenState extends State<ManagementScreen> {
     );
   }
 
-  Widget _buildQueueList(ThemeProvider themeProvider) {
+  Widget _buildQueueList(ThemeProvider themeProvider, List<QueueMemberModel> members) {
+    if (members.isEmpty) {
+      return Center(
+        child: Text(
+          'No members in queue yet',
+          style: GoogleFonts.lexendDeca(
+            color: themeProvider.textPrimary,
+            fontSize: 18,
+          ),
+        ),
+      );
+    }
+
     return Container(
       color: themeProvider.backgroundColor,
       child: ReorderableListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: _queueMembers.length,
+        itemCount: members.length,
         proxyDecorator: (child, index, animation) {
           return AnimatedBuilder(
             animation: animation,
@@ -108,19 +143,32 @@ class _ManagementScreenState extends State<ManagementScreen> {
             child: child,
           );
         },
-        onReorder: (int oldIndex, int newIndex) {
-          setState(() {
-            if (oldIndex < newIndex) {
-              newIndex -= 1;
+        onReorder: (int oldIndex, int newIndex) async {
+          if (oldIndex < newIndex) {
+            newIndex -= 1;
+          }
+
+          final reorderedMembers = List<QueueMemberModel>.from(members);
+          final item = reorderedMembers.removeAt(oldIndex);
+          reorderedMembers.insert(newIndex, item);
+
+          try {
+            await _queueService.reorderMembers(
+              queueId: widget.queueId,
+              members: reorderedMembers,
+            );
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error reordering: $e')),
+              );
             }
-            final Map<String, String> item = _queueMembers.removeAt(oldIndex);
-            _queueMembers.insert(newIndex, item);
-          });
+          }
         },
         itemBuilder: (context, index) {
           return _buildQueueMemberItem(
             themeProvider,
-            _queueMembers[index]['name']!,
+            members[index],
             index,
           );
         },
@@ -128,9 +176,11 @@ class _ManagementScreenState extends State<ManagementScreen> {
     );
   }
 
-  Widget _buildQueueMemberItem(ThemeProvider themeProvider, String name, int index) {
+  Widget _buildQueueMemberItem(ThemeProvider themeProvider, QueueMemberModel member, int index) {
+    final displayName = _showUsernames ? member.username : '${index + 1}';
+
     return Container(
-      key: ValueKey('$name-$index'),
+      key: ValueKey(member.id),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: themeProvider.secondaryColor,
@@ -162,7 +212,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
                 ),
               ),
               child: Text(
-                name,
+                displayName,
                 style: GoogleFonts.lexendDeca(
                   color: Colors.black,
                   fontSize: 18,
@@ -180,7 +230,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
             ),
             child: InkWell(
               onTap: () {
-                _showRemoveUserDialog(name, themeProvider);
+                _showRemoveUserDialog(member, themeProvider);
               },
               child: Icon(
                 Icons.close,
@@ -351,10 +401,10 @@ class _ManagementScreenState extends State<ManagementScreen> {
     );
   }
 
-  void _showRemoveUserDialog(String userName, ThemeProvider themeProvider) {
+  void _showRemoveUserDialog(QueueMemberModel member, ThemeProvider themeProvider) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return Dialog(
           backgroundColor: themeProvider.textField,
           shape: RoundedRectangleBorder(
@@ -381,7 +431,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Are you sure you want to remove "$userName" from the queue?',
+                  'Are you sure you want to remove "${member.username}" from the queue?',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.lexendDeca(
                     color: themeProvider.secondaryColor,
@@ -397,17 +447,30 @@ class _ManagementScreenState extends State<ManagementScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _queueMembers.removeWhere((member) => member['name'] == userName);
-                    });
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('$userName removed from queue'),
-                        backgroundColor: themeProvider.backgroundColor,
-                      ),
-                    );
+                  onPressed: () async {
+                    Navigator.pop(dialogContext);
+
+                    try {
+                      await _queueService.removeMemberFromQueue(
+                        queueId: widget.queueId,
+                        memberId: member.id,
+                      );
+
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${member.username} removed from queue'),
+                            backgroundColor: themeProvider.backgroundColor,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error removing user: $e')),
+                        );
+                      }
+                    }
                   },
                   child: Text(
                     'REMOVE',
@@ -427,7 +490,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.pop(dialogContext);
                   },
                   child: Text(
                     'CANCEL',
