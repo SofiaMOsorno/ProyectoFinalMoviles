@@ -9,6 +9,7 @@ import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/services/queue_service.dart';
 import 'package:proyecto_final/models/queue_model.dart';
+import 'package:proyecto_final/models/queue_member_model.dart';
 
 class JoinScreen extends StatefulWidget {
   const JoinScreen({super.key});
@@ -151,13 +152,19 @@ class _JoinScreenState extends State<JoinScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  'People in queue: ${queue.currentCount}/${queue.maxPeople}',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.lexendDeca(
-                    color: themeProvider.secondaryColor.withOpacity(0.7),
-                    fontSize: 14,
-                  ),
+                StreamBuilder<List<QueueMemberModel>>(
+                  stream: queueService.getQueueMembers(queue.id),
+                  builder: (context, memberSnapshot) {
+                    final realCount = memberSnapshot.data?.length ?? queue.currentCount;
+                    return Text(
+                      'People in queue: $realCount/${queue.maxPeople}',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.lexendDeca(
+                        color: themeProvider.secondaryColor.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(

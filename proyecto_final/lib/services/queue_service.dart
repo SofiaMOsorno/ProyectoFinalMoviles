@@ -319,4 +319,37 @@ class QueueService {
       throw 'Error checking user in queue: $e';
     }
   }
+
+  Future<Map<String, dynamic>?> getUserActiveQueue(String userId) async {
+    try {
+      final activeQueuesSnapshot = await _firestore
+          .collection('queues')
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      for (var queueDoc in activeQueuesSnapshot.docs) {
+        final memberSnapshot = await _firestore
+            .collection('queues')
+            .doc(queueDoc.id)
+            .collection('members')
+            .where('userId', isEqualTo: userId)
+            .limit(1)
+            .get();
+
+        if (memberSnapshot.docs.isNotEmpty) {
+          final queueData = QueueModel.fromDocument(queueDoc);
+          final memberData = QueueMemberModel.fromDocument(memberSnapshot.docs.first);
+
+          return {
+            'queue': queueData,
+            'member': memberData,
+          };
+        }
+      }
+
+      return null;
+    } catch (e) {
+      throw 'Error checking user active queue: $e';
+    }
+  }
 }

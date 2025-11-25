@@ -3,7 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/features/home/screens/join_screen.dart';
+import 'package:proyecto_final/features/home/screens/in_queue_screen.dart';
 import 'package:proyecto_final/services/auth_service.dart';
+import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/models/queue_model.dart';
+import 'package:proyecto_final/models/queue_member_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -118,12 +122,52 @@ class _HomeScreenState extends State<HomeScreen> {
                             await Future.delayed(
                                 const Duration(milliseconds: 550));
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const JoinScreen(),
-                              ),
-                            );
+                            final currentUser = authService.currentUser;
+                            if (currentUser != null) {
+                              final queueService = QueueService();
+                              try {
+                                final activeQueueData = await queueService.getUserActiveQueue(currentUser.uid);
+
+                                if (activeQueueData != null && context.mounted) {
+                                  final queue = activeQueueData['queue'] as QueueModel;
+                                  final member = activeQueueData['member'] as QueueMemberModel;
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => InQueueScreen(
+                                        queueId: queue.id,
+                                        userId: currentUser.uid,
+                                        userName: member.username,
+                                      ),
+                                    ),
+                                  );
+                                } else if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const JoinScreen(),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const JoinScreen(),
+                                    ),
+                                  );
+                                }
+                              }
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const JoinScreen(),
+                                ),
+                              );
+                            }
 
                             setState(() {
                               expandJoin = false;
