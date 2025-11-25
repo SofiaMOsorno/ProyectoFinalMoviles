@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
+import 'package:proyecto_final/shared/widgets/qr_code_widget.dart';
 
 class BigQrScreen extends StatelessWidget {
-  const BigQrScreen({super.key});
+  final String queueId;
+
+  const BigQrScreen({
+    super.key,
+    required this.queueId,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final qrSize = screenSize.width * 0.85;
+
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return Scaffold(
@@ -26,9 +35,11 @@ class BigQrScreen extends StatelessWidget {
           body: Center(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Image.asset(
-                'assets/images/big_qr.png',
-                fit: BoxFit.contain,
+              child: QrCodeWidget(
+                queueId: queueId,
+                size: qrSize,
+                backgroundColor: themeProvider.backgroundColor,
+                foregroundColor: themeProvider.textPrimary,
               ),
             ),
           ),

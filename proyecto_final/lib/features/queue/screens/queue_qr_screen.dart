@@ -3,9 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/app_drawer.dart';
+import 'package:proyecto_final/shared/widgets/qr_code_widget.dart';
+import 'package:proyecto_final/features/queue/screens/big_qr_screen.dart';
 
 class QueueQrScreen extends StatelessWidget {
-  const QueueQrScreen({super.key});
+  final String queueId;
+
+  const QueueQrScreen({
+    super.key,
+    required this.queueId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,23 +25,18 @@ class QueueQrScreen extends StatelessWidget {
             children: [
               _buildHeader(context, themeProvider),
               Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/big-qr');
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 30),
-                        _buildQrSection(context, themeProvider),
-                        const Spacer(),
-                        _buildManageButton(context, themeProvider),
-                        const SizedBox(height: 16),
-                        _buildActionButtons(themeProvider),
-                        const SizedBox(height: 30),
-                      ],
-                    ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 30),
+                      _buildQrSection(context, themeProvider),
+                      const Spacer(),
+                      _buildManageButton(context, themeProvider),
+                      const SizedBox(height: 16),
+                      _buildActionButtons(themeProvider),
+                      const SizedBox(height: 30),
+                    ],
                   ),
                 ),
               ),
@@ -120,14 +122,26 @@ class QueueQrScreen extends StatelessWidget {
             const SizedBox(width: 20),
             GestureDetector(
               onTap: () {
-                Navigator.pushNamed(context, '/big-qr');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BigQrScreen(queueId: queueId),
+                  ),
+                );
               },
-              child: SizedBox(
+              child: Container(
                 width: 120,
                 height: 120,
-                child: Image.asset(
-                  'assets/images/mini_qr.png',
-                  fit: BoxFit.contain,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: QrCodeWidget(
+                  queueId: queueId,
+                  size: 104,
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
                 ),
               ),
             ),

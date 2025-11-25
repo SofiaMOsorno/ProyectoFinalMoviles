@@ -17,6 +17,7 @@ dependencies:
   google_fonts: ^6.3.2
   mobile_scanner: ^7.1.2
   qr: ^3.0.2
+  qr_flutter: ^4.1.0
 
   firebase_core: ^3.6.0
   firebase_auth: ^5.3.1

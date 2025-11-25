@@ -29,12 +29,18 @@ class AppRoutes {
       join: (context) => const JoinScreen(),
       createdQueues: (context) => const AuthGuard(child: CreatedQueuesScreen()),
       createQueue: (context) => const AuthGuard(child: CreateQueueScreen()),
-      queueQr: (context) => const AuthGuard(child: QueueQrScreen()),
+      queueQr: (context) {
+        final queueId = ModalRoute.of(context)!.settings.arguments as String;
+        return AuthGuard(child: QueueQrScreen(queueId: queueId));
+      },
       management: (context) {
         final queueName = ModalRoute.of(context)!.settings.arguments as String? ?? 'My Queue';
         return AuthGuard(child: ManagementScreen(queueName: queueName));
       },
-      bigQr: (context) => const AuthGuard(child: BigQrScreen()),
+      bigQr: (context) {
+        final queueId = ModalRoute.of(context)!.settings.arguments as String;
+        return AuthGuard(child: BigQrScreen(queueId: queueId));
+      },
     };
   }
 
