@@ -18,16 +18,15 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _maxPeopleController = TextEditingController(text: '20');
   final TextEditingController _timerController = TextEditingController(text: '60');
+  final TextEditingController _urlController = TextEditingController();
   bool _enableNotifications = false;
   bool _isLoading = false;
 
   final Map<String, String> _infoMessages = {
-    'Add a Title for your line*:': 'Enter a clear name so users can easily identify your queue.',
-    'Description*:': 'Explain what this queue is for. Users will see this when joining.',
     'Maximum people:': 'Maximum number of users allowed simultaneously in the queue.',
-    'Timer (seconds):': 'This sets how long each user stays at the front of the queue.',
-    'File visualization': 'Upload an image or file that will be shown to users waiting in the queue.',
-    'Notifications': 'Enable alerts so you receive updates when someone joins or reaches the front.',
+    'Timer (seconds):': 'This sets how long each user stays at the front of the queue before being automatically moved.',
+    'File URL': 'Paste a URL to a menu, website, PDF, or any online resource you want users to see while waiting in the queue.\n\nExamples:\n• Restaurant menu (PDF)\n• Website with instructions\n• Image with information\n\nThis field is optional.',
+    'Notifications': 'Enable alerts so you receive updates when someone joins or reaches the front of the queue.',
   };
 
   @override
@@ -36,7 +35,19 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
     _descriptionController.dispose();
     _maxPeopleController.dispose();
     _timerController.dispose();
+    _urlController.dispose();
     super.dispose();
+  }
+
+  bool _isValidUrl(String url) {
+    if (url.trim().isEmpty) return true; // URL is optional
+    
+    try {
+      final uri = Uri.parse(url);
+      return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https');
+    } catch (e) {
+      return false;
+    }
   }
 
   @override
@@ -83,7 +94,7 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
                               _timerController,
                             ),
                             const SizedBox(height: 20),
-                            _buildUploadSection(themeProvider),
+                            _buildUrlSection(themeProvider),
                             const SizedBox(height: 20),
                             _buildNotificationToggle(themeProvider),
                             const SizedBox(height: 30),
@@ -310,25 +321,24 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
     );
   }
 
-  Widget _buildUploadSection(ThemeProvider themeProvider) {
+  Widget _buildUrlSection(ThemeProvider themeProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              'Would you like your \nqueue to visualize a file?',
+              'Resource URL (Optional)',
               style: GoogleFonts.lexendDeca(
                 color: themeProvider.secondaryColor,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                height: 1.3,
               ),
             ),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () {
-                _showInfoDialog('File visualization');
+                _showInfoDialog('File URL');
               },
               child: Container(
                 padding: const EdgeInsets.all(4),
@@ -345,10 +355,8 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           decoration: BoxDecoration(
             color: themeProvider.textPrimary,
             borderRadius: BorderRadius.circular(10),
@@ -357,42 +365,52 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
               width: 3,
             ),
           ),
-          child: InkWell(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('File picker coming soon'),
-                ),
-              );
-            },
+          child: TextField(
+            controller: _urlController,
+            style: GoogleFonts.lexendDeca(
+              color: Colors.black,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
+              hintText: 'https://example.com/menu.pdf',
+              hintStyle: GoogleFonts.lexendDeca(
+                color: Colors.grey,
+                fontSize: 16,
+              ),
+              prefixIcon: Icon(
+                Icons.link,
+                color: themeProvider.secondaryColor,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              border: InputBorder.none,
+            ),
+            keyboardType: TextInputType.url,
+          ),
+        ),
+        if (_urlController.text.isNotEmpty && !_isValidUrl(_urlController.text))
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 4),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: themeProvider.secondaryColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.upload_file,
-                    color: themeProvider.textPrimary,
-                    size: 28,
-                  ),
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 16,
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 4),
                 Text(
-                  'Upload File',
+                  'Please enter a valid URL (must start with http:// or https://)',
                   style: GoogleFonts.lexendDeca(
-                    color: themeProvider.secondaryColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
-        ),
       ],
     );
   }
@@ -512,6 +530,12 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
       return;
     }
 
+    final url = _urlController.text.trim();
+    if (url.isNotEmpty && !_isValidUrl(url)) {
+      _showErrorSnackBar('Please enter a valid URL or leave it empty');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -530,6 +554,7 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
         timerSeconds: timerSeconds,
         enableNotifications: _enableNotifications,
         creatorId: userId,
+        fileUrl: url.isNotEmpty ? url : null,
       );
 
       if (mounted) {
@@ -554,10 +579,10 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
     );
   }
 
-  void _showInfoDialog(String label) {
+  void _showInfoDialog(String key) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final message = _infoMessages[label] ?? 'No additional information available.';
-
+    final info = _infoMessages[key] ?? 'No information available';
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -571,24 +596,27 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
             ),
           ),
           title: Text(
-            label,
+            key,
             style: GoogleFonts.ericaOne(
               color: themeProvider.secondaryColor,
-              fontSize: 24,
+              fontSize: 22,
             ),
           ),
-          content: Text(
-            message,
-            style: GoogleFonts.lexendDeca(
-              color: themeProvider.backgroundColor,
-              fontSize: 16,
+          content: SingleChildScrollView(
+            child: Text(
+              info,
+              style: GoogleFonts.lexendDeca(
+                color: themeProvider.backgroundColor,
+                fontSize: 15,
+                height: 1.4,
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'OK',
+                'GOT IT',
                 style: GoogleFonts.ericaOne(
                   color: themeProvider.secondaryColor,
                   fontSize: 18,

@@ -24,8 +24,16 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _maxPeopleController;
   late TextEditingController _timerController;
+  late TextEditingController _urlController;
   late bool _enableNotifications;
   bool _isLoading = false;
+
+  final Map<String, String> _infoMessages = {
+    'Maximum people:': 'Maximum number of users allowed simultaneously in the queue.',
+    'Timer (seconds):': 'This sets how long each user stays at the front of the queue before being automatically moved.',
+    'File URL': 'Paste a URL to a menu, website, PDF, or any online resource you want users to see while waiting in the queue.\n\nExamples:\n• Restaurant menu (PDF)\n• Website with instructions\n• Image with information\n\nThis field is optional.',
+    'Notifications': 'Enable alerts so you receive updates when someone joins or reaches the front of the queue.',
+  };
 
   @override
   void initState() {
@@ -34,11 +42,11 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
   }
 
   void _initializeControllers() {
-    // Load data from the actual queue object
     _titleController = TextEditingController(text: widget.queue.title);
     _descriptionController = TextEditingController(text: widget.queue.description);
     _maxPeopleController = TextEditingController(text: widget.queue.maxPeople.toString());
     _timerController = TextEditingController(text: widget.queue.timerSeconds.toString());
+    _urlController = TextEditingController(text: widget.queue.fileUrl ?? '');
     _enableNotifications = widget.queue.enableNotifications;
   }
 
@@ -48,7 +56,19 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
     _descriptionController.dispose();
     _maxPeopleController.dispose();
     _timerController.dispose();
+    _urlController.dispose();
     super.dispose();
+  }
+
+  bool _isValidUrl(String url) {
+    if (url.trim().isEmpty) return true;
+    
+    try {
+      final uri = Uri.parse(url);
+      return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https');
+    } catch (e) {
+      return false;
+    }
   }
 
   @override
@@ -93,7 +113,7 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
                           _timerController,
                         ),
                         const SizedBox(height: 20),
-                        _buildUploadSection(themeProvider),
+                        _buildUrlSection(themeProvider),
                         const SizedBox(height: 20),
                         _buildNotificationToggle(themeProvider),
                         const SizedBox(height: 30),
@@ -309,25 +329,24 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
     );
   }
 
-  Widget _buildUploadSection(ThemeProvider themeProvider) {
+  Widget _buildUrlSection(ThemeProvider themeProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              'Would you like\nyour queue to\nvisualize a file?',
+              'Resource URL (Optional)',
               style: GoogleFonts.lexendDeca(
                 color: themeProvider.secondaryColor,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                height: 1.3,
               ),
             ),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () {
-                _showInfoDialog('File visualization');
+                _showInfoDialog('File URL');
               },
               child: Container(
                 padding: const EdgeInsets.all(4),
@@ -344,10 +363,8 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
           decoration: BoxDecoration(
             color: themeProvider.textPrimary,
             borderRadius: BorderRadius.circular(10),
@@ -356,42 +373,54 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
               width: 3,
             ),
           ),
-          child: InkWell(
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('File picker coming soon'),
-                ),
-              );
-            },
+          child: TextField(
+            controller: _urlController,
+            style: GoogleFonts.lexendDeca(
+              color: Colors.black,
+              fontSize: 16,
+            ),
+            decoration: InputDecoration(
+              hintText: 'https://example.com/menu.pdf',
+              hintStyle: GoogleFonts.lexendDeca(
+                color: Colors.grey,
+                fontSize: 16,
+              ),
+              prefixIcon: Icon(
+                Icons.link,
+                color: themeProvider.secondaryColor,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              border: InputBorder.none,
+            ),
+            keyboardType: TextInputType.url,
+          ),
+        ),
+        if (_urlController.text.isNotEmpty && !_isValidUrl(_urlController.text))
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 4),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: themeProvider.secondaryColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.upload_file,
-                    color: themeProvider.textPrimary,
-                    size: 28,
-                  ),
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 16,
                 ),
-                const SizedBox(width: 16),
-                Text(
-                  'Upload File',
-                  style: GoogleFonts.lexendDeca(
-                    color: themeProvider.secondaryColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Please enter a valid URL (must start with http:// or https://)',
+                    style: GoogleFonts.lexendDeca(
+                      color: Colors.red,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
       ],
     );
   }
@@ -498,10 +527,9 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
   }
 
   Future<void> _saveChanges(BuildContext context, ThemeProvider themeProvider) async {
-    // Validate inputs
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please enter a title'),
           backgroundColor: Colors.red,
         ),
@@ -511,7 +539,7 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
 
     if (_descriptionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please enter a description'),
           backgroundColor: Colors.red,
         ),
@@ -522,7 +550,7 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
     final maxPeople = int.tryParse(_maxPeopleController.text);
     if (maxPeople == null || maxPeople <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please enter a valid number of maximum people'),
           backgroundColor: Colors.red,
         ),
@@ -533,8 +561,19 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
     final timerSeconds = int.tryParse(_timerController.text);
     if (timerSeconds == null || timerSeconds <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please enter a valid timer value'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final url = _urlController.text.trim();
+    if (url.isNotEmpty && !_isValidUrl(url)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid URL or leave it empty'),
           backgroundColor: Colors.red,
         ),
       );
@@ -546,7 +585,6 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
     });
 
     try {
-      // Update queue in Firebase
       await _queueService.updateQueue(
         queueId: widget.queue.id,
         title: _titleController.text.trim(),
@@ -554,13 +592,13 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
         maxPeople: maxPeople,
         timerSeconds: timerSeconds,
         enableNotifications: _enableNotifications,
+        fileUrl: url.isNotEmpty ? url : null,
       );
 
       setState(() {
         _isLoading = false;
       });
 
-      // Show success dialog
       if (context.mounted) {
         _showSuccessDialog(context, themeProvider);
       }
@@ -580,8 +618,10 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
     }
   }
 
-  void _showInfoDialog(String title) {
+  void _showInfoDialog(String key) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final info = _infoMessages[key] ?? 'No information available';
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -595,24 +635,27 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
             ),
           ),
           title: Text(
-            title,
+            key,
             style: GoogleFonts.ericaOne(
               color: themeProvider.secondaryColor,
-              fontSize: 24,
+              fontSize: 22,
             ),
           ),
-          content: Text(
-            'This is placeholder information about $title',
-            style: GoogleFonts.lexendDeca(
-              color: themeProvider.backgroundColor,
-              fontSize: 16,
+          content: SingleChildScrollView(
+            child: Text(
+              info,
+              style: GoogleFonts.lexendDeca(
+                color: themeProvider.backgroundColor,
+                fontSize: 15,
+                height: 1.4,
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                'OK',
+                'GOT IT',
                 style: GoogleFonts.ericaOne(
                   color: themeProvider.secondaryColor,
                   fontSize: 18,
