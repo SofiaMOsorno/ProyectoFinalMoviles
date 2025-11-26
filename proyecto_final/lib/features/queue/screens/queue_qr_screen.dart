@@ -1,18 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/qr_code_widget.dart';
 import 'package:proyecto_final/features/queue/screens/big_qr_screen.dart';
+import 'package:gal/gal.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
 
-class QueueQrScreen extends StatelessWidget {
+class QueueQrScreen extends StatefulWidget {
   final String queueId;
 
   const QueueQrScreen({
     super.key,
     required this.queueId,
   });
+
+  @override
+  State<QueueQrScreen> createState() => _QueueQrScreenState();
+}
+
+class _QueueQrScreenState extends State<QueueQrScreen> {
+  final GlobalKey _qrKey = GlobalKey();
+
+  Future<void> _downloadQrCode(BuildContext context) async {
+    try {
+      // Request storage permission
+      final status = await Permission.photos.request();
+      if (!status.isGranted) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Storage permission is required to save the QR code'),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Capture the QR code as image
+      RenderRepaintBoundary boundary =
+          _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      // Save to gallery
+      await Gal.putImageBytes(pngBytes, album: 'QueueUp');
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'QR code saved to gallery!',
+              style: GoogleFonts.lexendDeca(),
+            ),
+            backgroundColor: Theme.of(context).primaryColor,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving QR code: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +168,7 @@ class QueueQrScreen extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () async {
-                await Clipboard.setData(ClipboardData(text: queueId));
+                await Clipboard.setData(ClipboardData(text: widget.queueId));
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -133,23 +194,26 @@ class QueueQrScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => BigQrScreen(queueId: queueId),
+                    builder: (context) => BigQrScreen(queueId: widget.queueId),
                   ),
                 );
               },
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.all(8),
-                child: QrCodeWidget(
-                  queueId: queueId,
-                  size: 104,
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
+              child: RepaintBoundary(
+                key: _qrKey,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                  child: QrCodeWidget(
+                    queueId: widget.queueId,
+                    size: 104,
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                  ),
                 ),
               ),
             ),
@@ -177,7 +241,7 @@ class QueueQrScreen extends StatelessWidget {
             '/management',
             arguments: {
               'queueName': 'My Queue',
-              'queueId': queueId,
+              'queueId': widget.queueId,
             },
           );
         },
@@ -207,13 +271,7 @@ class QueueQrScreen extends StatelessWidget {
                   ),
                   elevation: 0,
                 ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Funcionalidad de descargar proximamente'),
-                    ),
-                  );
-                },
+                onPressed: () => _downloadQrCode(context),
                 child: Icon(
                   Icons.download,
                   color: themeProvider.textPrimary,
