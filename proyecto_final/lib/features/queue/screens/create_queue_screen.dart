@@ -21,6 +21,15 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
   bool _enableNotifications = false;
   bool _isLoading = false;
 
+  final Map<String, String> _infoMessages = {
+    'Add a Title for your line*:': 'Enter a clear name so users can easily identify your queue.',
+    'Description*:': 'Explain what this queue is for. Users will see this when joining.',
+    'Maximum people:': 'Maximum number of users allowed simultaneously in the queue.',
+    'Timer (seconds):': 'This sets how long each user stays at the front of the queue.',
+    'File visualization': 'Upload an image or file that will be shown to users waiting in the queue.',
+    'Notifications': 'Enable alerts so you receive updates when someone joins or reaches the front.',
+  };
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -545,8 +554,10 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
     );
   }
 
-  void _showInfoDialog(String title) {
+  void _showInfoDialog(String label) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final message = _infoMessages[label] ?? 'No additional information available.';
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -560,14 +571,14 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
             ),
           ),
           title: Text(
-            title,
+            label,
             style: GoogleFonts.ericaOne(
               color: themeProvider.secondaryColor,
               fontSize: 24,
             ),
           ),
           content: Text(
-            'This is placeholder information about $title',
+            message,
             style: GoogleFonts.lexendDeca(
               color: themeProvider.backgroundColor,
               fontSize: 16,
