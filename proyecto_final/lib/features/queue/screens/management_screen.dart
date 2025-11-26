@@ -358,17 +358,50 @@ class _ManagementScreenState extends State<ManagementScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: themeProvider.secondaryColor,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.info_outline,
-            color: themeProvider.textPrimary,
-            size: 16,
-          ),
+        GestureDetector(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  backgroundColor: themeProvider.textPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: themeProvider.secondaryColor,
+                      width: 3,
+                    ),
+                  ),
+                  title: Text(
+                    'Show Usernames',
+                    style: GoogleFonts.ericaOne(
+                      color: themeProvider.secondaryColor,
+                      fontSize: 24,
+                    ),
+                  ),
+                  content: Text(
+                    'When enabled, the list will display usernames instead of positions.',
+                    style: GoogleFonts.lexendDeca(
+                      color: themeProvider.backgroundColor,
+                      fontSize: 16,
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'OK',
+                        style: GoogleFonts.ericaOne(
+                          color: themeProvider.secondaryColor,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
         ),
       ],
     );
