@@ -4,7 +4,7 @@ class QueueModel {
   final String id;
   final String title;
   final String description;
-  final int maxPeople;
+  final int? maxPeople;
   final int timerSeconds;
   final bool enableNotifications;
   final String creatorId;
@@ -18,7 +18,7 @@ class QueueModel {
     required this.id,
     required this.title,
     required this.description,
-    required this.maxPeople,
+    this.maxPeople,
     required this.timerSeconds,
     required this.enableNotifications,
     required this.creatorId,
@@ -50,7 +50,7 @@ class QueueModel {
       id: id,
       title: map['title'] ?? '',
       description: map['description'] ?? '',
-      maxPeople: map['maxPeople'] ?? 20,
+      maxPeople: map['maxPeople'],
       timerSeconds: map['timerSeconds'] ?? 60,
       enableNotifications: map['enableNotifications'] ?? false,
       creatorId: map['creatorId'] ?? '',

@@ -252,8 +252,11 @@ class _CreatedQueuesScreenState extends State<CreatedQueuesScreen> {
                     stream: _queueService.getQueueMembers(queue.id),
                     builder: (context, memberSnapshot) {
                       final realCount = memberSnapshot.data?.length ?? queue.currentCount;
+                      final displayText = queue.maxPeople != null
+                          ? '$realCount/${queue.maxPeople} people'
+                          : '$realCount people';
                       return Text(
-                        '$realCount/${queue.maxPeople} people',
+                        displayText,
                         style: GoogleFonts.lexendDeca(
                           color: themeProvider.textPrimary.withOpacity(0.8),
                           fontSize: 14,

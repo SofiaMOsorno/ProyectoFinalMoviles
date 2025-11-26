@@ -156,8 +156,11 @@ class _JoinScreenState extends State<JoinScreen> {
                   stream: queueService.getQueueMembers(queue.id),
                   builder: (context, memberSnapshot) {
                     final realCount = memberSnapshot.data?.length ?? queue.currentCount;
+                    final displayText = queue.maxPeople != null
+                        ? 'People in queue: $realCount/${queue.maxPeople}'
+                        : 'People in queue: $realCount';
                     return Text(
-                      'People in queue: $realCount/${queue.maxPeople}',
+                      displayText,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.lexendDeca(
                         color: themeProvider.secondaryColor.withOpacity(0.7),

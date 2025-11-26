@@ -14,6 +14,11 @@
     </dict>
 </array>
 <dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need access to save QR codes to your photo library</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to save QR codes to your photo library</string>
+	
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

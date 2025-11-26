@@ -8,7 +8,7 @@ class QueueService {
   Future<String> createQueue({
     required String title,
     required String description,
-    required int maxPeople,
+    int? maxPeople,
     required int timerSeconds,
     required bool enableNotifications,
     required String creatorId,
@@ -136,9 +136,9 @@ class QueueService {
 
       final queueData = queueDoc.data()!;
       final currentCount = queueData['currentCount'] ?? 0;
-      final maxPeople = queueData['maxPeople'] ?? 20;
+      final maxPeople = queueData['maxPeople'];
 
-      if (currentCount >= maxPeople) {
+      if (maxPeople != null && currentCount >= maxPeople) {
         throw 'Queue is full';
       }
 

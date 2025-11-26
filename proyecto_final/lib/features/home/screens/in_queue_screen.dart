@@ -34,20 +34,43 @@ class _InQueueScreenState extends State<InQueueScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 80.0),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  decoration: BoxDecoration(
-                    color: themeProvider.secondaryColor,
-                  ),
-                  child: Text(
-                    "YOUR QUEUE",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.ericaOne(
-                      color: themeProvider.backgroundColor,
-                      fontSize: 43,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      decoration: BoxDecoration(
+                        color: themeProvider.secondaryColor,
+                      ),
+                      child: Text(
+                        "YOUR QUEUE",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.ericaOne(
+                          color: themeProvider.backgroundColor,
+                          fontSize: 43,
+                        ),
+                      ),
                     ),
-                  ),
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: themeProvider.backgroundColor,
+                          size: 30,
+                        ),
+                        onPressed: () {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/',
+                            (route) => false,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Expanded(

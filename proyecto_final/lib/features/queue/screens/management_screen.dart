@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/services/queue_service.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
+import 'package:proyecto_final/models/queue_model.dart';
 
 class ManagementScreen extends StatefulWidget {
   final String queueName;
@@ -22,6 +23,26 @@ class ManagementScreen extends StatefulWidget {
 class _ManagementScreenState extends State<ManagementScreen> {
   final QueueService _queueService = QueueService();
   bool _showUsernames = false;
+  QueueModel? _queueData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQueueData();
+  }
+
+  Future<void> _loadQueueData() async {
+    try {
+      final queue = await _queueService.getQueue(widget.queueId);
+      if (mounted) {
+        setState(() {
+          _queueData = queue;
+        });
+      }
+    } catch (e) {
+      // Handle error silently, button will just not show
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -251,8 +272,10 @@ class _ManagementScreenState extends State<ManagementScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildAllowMoreUsersButton(themeProvider),
-          const SizedBox(height: 12),
+          if (_queueData?.maxPeople != null) ...[
+            _buildAllowMoreUsersButton(themeProvider),
+            const SizedBox(height: 12),
+          ],
           _buildSeeQRButton(themeProvider),
           const SizedBox(height: 12),
           _buildShowUsernamesToggle(themeProvider),
