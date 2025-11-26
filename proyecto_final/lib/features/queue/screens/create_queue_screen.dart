@@ -20,6 +20,7 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
   final TextEditingController _timerController = TextEditingController(text: '60');
   final TextEditingController _urlController = TextEditingController();
   bool _enableNotifications = false;
+  bool _enableMaxPeopleLimit = false;
   bool _isLoading = false;
 
   final Map<String, String> _infoMessages = {
@@ -82,11 +83,7 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
                               _descriptionController,
                             ),
                             const SizedBox(height: 20),
-                            _buildNumberField(
-                              themeProvider,
-                              'Maximum people:',
-                              _maxPeopleController,
-                            ),
+                            _buildMaxPeopleSection(themeProvider),
                             const SizedBox(height: 20),
                             _buildNumberField(
                               themeProvider,
@@ -321,6 +318,87 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
     );
   }
 
+  Widget _buildMaxPeopleSection(ThemeProvider themeProvider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: themeProvider.backgroundColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: _enableMaxPeopleLimit
+                      ? themeProvider.secondaryColor
+                      : themeProvider.textPrimary,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: themeProvider.secondaryColor,
+                    width: 2,
+                  ),
+                ),
+                child: Switch(
+                  value: _enableMaxPeopleLimit,
+                  onChanged: (value) {
+                    setState(() {
+                      _enableMaxPeopleLimit = value;
+                    });
+                  },
+                  activeColor: themeProvider.textPrimary,
+                  activeTrackColor: themeProvider.secondaryColor,
+                  inactiveThumbColor: themeProvider.secondaryColor,
+                  inactiveTrackColor: themeProvider.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Maximum people limit',
+                  style: GoogleFonts.lexendDeca(
+                    color: themeProvider.secondaryColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  _showInfoDialog('Maximum people:');
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: themeProvider.secondaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.info_outline,
+                    color: themeProvider.textPrimary,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_enableMaxPeopleLimit) ...[
+          const SizedBox(height: 12),
+          _buildNumberField(
+            themeProvider,
+            'Maximum people:',
+            _maxPeopleController,
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildUrlSection(ThemeProvider themeProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,10 +596,13 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
       return;
     }
 
-    final maxPeople = int.tryParse(_maxPeopleController.text) ?? 20;
-    if (maxPeople <= 0) {
-      _showErrorSnackBar('Maximum people must be greater than 0');
-      return;
+    int? maxPeople;
+    if (_enableMaxPeopleLimit) {
+      maxPeople = int.tryParse(_maxPeopleController.text);
+      if (maxPeople == null || maxPeople <= 0) {
+        _showErrorSnackBar('Maximum people must be greater than 0');
+        return;
+      }
     }
 
     final timerSeconds = int.tryParse(_timerController.text) ?? 60;

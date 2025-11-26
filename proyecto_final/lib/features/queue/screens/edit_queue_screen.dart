@@ -26,6 +26,7 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
   late TextEditingController _timerController;
   late TextEditingController _urlController;
   late bool _enableNotifications;
+  late bool _enableMaxPeopleLimit;
   bool _isLoading = false;
 
   final Map<String, String> _infoMessages = {
@@ -44,7 +45,8 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
   void _initializeControllers() {
     _titleController = TextEditingController(text: widget.queue.title);
     _descriptionController = TextEditingController(text: widget.queue.description);
-    _maxPeopleController = TextEditingController(text: widget.queue.maxPeople.toString());
+    _enableMaxPeopleLimit = widget.queue.maxPeople != null;
+    _maxPeopleController = TextEditingController(text: widget.queue.maxPeople?.toString() ?? '20');
     _timerController = TextEditingController(text: widget.queue.timerSeconds.toString());
     _urlController = TextEditingController(text: widget.queue.fileUrl ?? '');
     _enableNotifications = widget.queue.enableNotifications;
@@ -101,11 +103,7 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
                           _descriptionController,
                         ),
                         const SizedBox(height: 20),
-                        _buildNumberField(
-                          themeProvider,
-                          'Maximum people:',
-                          _maxPeopleController,
-                        ),
+                        _buildMaxPeopleSection(themeProvider),
                         const SizedBox(height: 20),
                         _buildNumberField(
                           themeProvider,
@@ -329,6 +327,87 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
     );
   }
 
+  Widget _buildMaxPeopleSection(ThemeProvider themeProvider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: themeProvider.backgroundColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: _enableMaxPeopleLimit
+                      ? themeProvider.secondaryColor
+                      : themeProvider.textPrimary,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: themeProvider.secondaryColor,
+                    width: 2,
+                  ),
+                ),
+                child: Switch(
+                  value: _enableMaxPeopleLimit,
+                  onChanged: (value) {
+                    setState(() {
+                      _enableMaxPeopleLimit = value;
+                    });
+                  },
+                  activeColor: themeProvider.textPrimary,
+                  activeTrackColor: themeProvider.secondaryColor,
+                  inactiveThumbColor: themeProvider.secondaryColor,
+                  inactiveTrackColor: themeProvider.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'Maximum people limit',
+                  style: GoogleFonts.lexendDeca(
+                    color: themeProvider.secondaryColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  _showInfoDialog('Maximum people:');
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: themeProvider.secondaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.info_outline,
+                    color: themeProvider.textPrimary,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (_enableMaxPeopleLimit) ...[
+          const SizedBox(height: 12),
+          _buildNumberField(
+            themeProvider,
+            'Maximum people:',
+            _maxPeopleController,
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _buildUrlSection(ThemeProvider themeProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,15 +626,18 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
       return;
     }
 
-    final maxPeople = int.tryParse(_maxPeopleController.text);
-    if (maxPeople == null || maxPeople <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid number of maximum people'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
+    int? maxPeople;
+    if (_enableMaxPeopleLimit) {
+      maxPeople = int.tryParse(_maxPeopleController.text);
+      if (maxPeople == null || maxPeople <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid number of maximum people'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
     }
 
     final timerSeconds = int.tryParse(_timerController.text);
