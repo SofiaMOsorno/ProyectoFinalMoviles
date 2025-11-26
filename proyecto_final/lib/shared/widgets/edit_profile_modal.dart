@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +16,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
   final TextEditingController _nameController = TextEditingController();
   final ProfilePictureService _pictureService = ProfilePictureService();
 
-  File? _selectedImage;
   String? _selectedPresetImage;
   bool _isLoadingName = false;
   bool _isLoadingPicture = false;
@@ -48,78 +46,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final source = await _showImageSourceDialog();
-      if (source == null) return;
-
-      File? image;
-      if (source == ImageSource.gallery) {
-        image = await _pictureService.pickImageFromGallery();
-      } else {
-        image = await _pictureService.pickImageFromCamera();
-      }
-
-      if (image != null) {
-        setState(() {
-          _selectedImage = image;
-          _selectedPresetImage = null; // Limpiar selección de preset
-        });
-      }
-    } catch (e) {
-      _showErrorSnackBar('Error selecting image: $e');
-    }
-  }
-
-  Future<ImageSource?> _showImageSourceDialog() async {
-    return showDialog<ImageSource>(
-      context: context,
-      builder: (BuildContext context) {
-        final themeProvider = Provider.of<ThemeProvider>(context);
-        return AlertDialog(
-          backgroundColor: themeProvider.textField,
-          title: Text(
-            'Select image from',
-            style: GoogleFonts.lexendDeca(
-              color: themeProvider.secondaryColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(Icons.photo_library, color: themeProvider.secondaryColor),
-                title: Text(
-                  'Gallery',
-                  style: GoogleFonts.lexendDeca(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                onTap: () => Navigator.pop(context, ImageSource.gallery),
-              ),
-              ListTile(
-                leading: Icon(Icons.camera_alt, color: themeProvider.secondaryColor),
-                title: Text(
-                  'Camera',
-                  style: GoogleFonts.lexendDeca(
-                    color: Colors.black,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                onTap: () => Navigator.pop(context, ImageSource.camera),
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _updateUsername() async {
@@ -171,7 +97,7 @@ class _EditProfileModalState extends State<EditProfileModal> {
   }
 
   Future<void> _updateProfilePicture() async {
-    if (_selectedImage == null && _selectedPresetImage == null) {
+    if (_selectedPresetImage == null) {
       _showErrorSnackBar('No image selected');
       return;
     }
@@ -183,13 +109,14 @@ class _EditProfileModalState extends State<EditProfileModal> {
       final user = authService.currentUser;
 
       if (user != null) {
-        if (_selectedImage != null) {
-          // Guardar imagen personalizada
-          await _pictureService.saveProfilePicture(_selectedImage!, user.uid);
-        } else if (_selectedPresetImage != null) {
-          // Guardar imagen preestablecida
-          await _pictureService.savePresetProfilePicture(_selectedPresetImage!, user.uid);
-        }
+        // Guardar localmente
+        await _pictureService.savePresetProfilePicture(_selectedPresetImage!, user.uid);
+        
+        // Actualizar en Firebase con la ruta del asset
+        await authService.updateUserProfile(
+          uid: user.uid,
+          profilePicture: _selectedPresetImage,
+        );
 
         if (mounted) {
           _showSuccessSnackBar('Profile picture updated successfully');
@@ -274,8 +201,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
                   const SizedBox(height: 24),
                   _buildNameField(themeProvider),
                   const SizedBox(height: 20),
-                  _buildPictureUpload(themeProvider),
-                  const SizedBox(height: 16),
                   _buildPresetImageSelector(themeProvider),
                   const SizedBox(height: 24),
                   _buildCancelButton(context, themeProvider),
@@ -363,150 +288,12 @@ class _EditProfileModalState extends State<EditProfileModal> {
     );
   }
 
-  Widget _buildPictureUpload(ThemeProvider themeProvider) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Upload Custom Picture',
-          style: GoogleFonts.lexendDeca(
-            color: themeProvider.secondaryColor,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (_selectedImage != null) ...[
-          Center(
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.file(
-                    _selectedImage!,
-                    width: 150,
-                    height: 150,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Positioned(
-                  top: 5,
-                  right: 5,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedImage = null;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-        Container(
-          decoration: BoxDecoration(
-            color: themeProvider.backgroundColor,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: themeProvider.secondaryColor,
-              width: 3,
-            ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: _pickImage,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: themeProvider.lightAccent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.upload_file,
-                            color: themeProvider.backgroundColor,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Text(
-                          _selectedImage == null ? 'Upload a File' : 'Change File',
-                          style: GoogleFonts.lexendDeca(
-                            color: themeProvider.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: (_selectedImage != null || _selectedPresetImage != null)
-                      ? themeProvider.secondaryColor
-                      : themeProvider.lightAccent.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: _isLoadingPicture
-                    ? Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: themeProvider.textPrimary,
-                          ),
-                        ),
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.check),
-                        color: themeProvider.textPrimary,
-                        iconSize: 28,
-                        onPressed: (_selectedImage != null || _selectedPresetImage != null) 
-                            ? _updateProfilePicture 
-                            : null,
-                        padding: const EdgeInsets.all(8),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildPresetImageSelector(ThemeProvider themeProvider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Or Choose a Preset Image',
+          'Choose Your Profile Picture',
           style: GoogleFonts.lexendDeca(
             color: themeProvider.secondaryColor,
             fontSize: 16,
@@ -532,7 +319,6 @@ class _EditProfileModalState extends State<EditProfileModal> {
                   onTap: () {
                     setState(() {
                       _selectedPresetImage = imagePath;
-                      _selectedImage = null;
                     });
                   },
                   child: Container(
@@ -572,6 +358,41 @@ class _EditProfileModalState extends State<EditProfileModal> {
             ),
           ),
         ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          height: 60,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _selectedPresetImage != null
+                  ? themeProvider.secondaryColor
+                  : themeProvider.lightAccent.withOpacity(0.5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              elevation: 0,
+            ),
+            onPressed: _selectedPresetImage != null && !_isLoadingPicture
+                ? _updateProfilePicture
+                : null,
+            child: _isLoadingPicture
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: themeProvider.textPrimary,
+                    ),
+                  )
+                : Text(
+                    'CONFIRM PICTURE',
+                    style: GoogleFonts.ericaOne(
+                      color: themeProvider.textPrimary,
+                      fontSize: 22,
+                    ),
+                  ),
+          ),
+        ),
       ],
     );
   }
@@ -602,5 +423,3 @@ class _EditProfileModalState extends State<EditProfileModal> {
     );
   }
 }
-
-enum ImageSource { gallery, camera }

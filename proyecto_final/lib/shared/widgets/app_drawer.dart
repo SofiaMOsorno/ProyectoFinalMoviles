@@ -284,17 +284,38 @@ class AppDrawer extends StatelessWidget {
     final userData = await authService.getUserData(uid);
     final pictureData = await pictureService.getProfilePicturePath(uid);
 
+    // Prioridad: 1. Preset local, 2. Firebase profilePicture, 3. Google photoURL
+    String? pictureType;
+    String? picturePath;
+
+    if (pictureData['type'] == 'preset' && pictureData['path'] != null) {
+      // Usuario seleccionó una imagen preset
+      pictureType = 'preset';
+      picturePath = pictureData['path'];
+    } else if (userData != null && userData['profilePicture'] != null) {
+      final firebasePicture = userData['profilePicture'] as String;
+      if (firebasePicture.startsWith('assets/')) {
+        // Es una imagen preset guardada en Firebase
+        pictureType = 'preset';
+        picturePath = firebasePicture;
+      } else {
+        // Es una URL de red (Google)
+        pictureType = 'network';
+        picturePath = firebasePicture;
+      }
+    }
+
     if (userData != null) {
       return {
         ...userData,
-        'pictureType': pictureData['type'],
-        'picturePath': pictureData['path'],
+        'pictureType': pictureType,
+        'picturePath': picturePath,
       };
     }
 
     return {
-      'pictureType': pictureData['type'],
-      'picturePath': pictureData['path'],
+      'pictureType': pictureType,
+      'picturePath': picturePath,
     };
   }
 
