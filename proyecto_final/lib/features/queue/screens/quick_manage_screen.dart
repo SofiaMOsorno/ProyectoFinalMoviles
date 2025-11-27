@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
 import 'package:proyecto_final/models/queue_model.dart';
 import 'package:proyecto_final/features/queue/screens/management_screen.dart';
@@ -222,10 +223,10 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
                                 ),
                                 child: Column(
                                   children: [
-                                    Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: themeProvider.secondaryColor,
+                                    _buildProfilePicture(
+                                      firstMember.userId,
+                                      firstMember.username,
+                                      themeProvider,
                                     ),
                                     const SizedBox(height: 15),
                                     Text(
@@ -383,6 +384,70 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildProfilePicture(
+    String userId,
+    String username,
+    ThemeProvider themeProvider,
+  ) {
+    if (userId.startsWith('guest_')) {
+      return CircleAvatar(
+        radius: 50,
+        backgroundColor: themeProvider.secondaryColor.withOpacity(0.2),
+        child: Icon(
+          Icons.person,
+          size: 60,
+          color: themeProvider.secondaryColor,
+        ),
+      );
+    }
+
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: AuthService().getUserData(userId),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data == null) {
+          return CircleAvatar(
+            radius: 50,
+            backgroundColor: themeProvider.secondaryColor.withOpacity(0.2),
+            child: Text(
+              username.isNotEmpty ? username[0].toUpperCase() : '?',
+              style: GoogleFonts.ericaOne(
+                color: themeProvider.secondaryColor,
+                fontSize: 48,
+              ),
+            ),
+          );
+        }
+
+        final userData = snapshot.data!;
+        final profilePicture = userData['profilePicture'] as String?;
+
+        ImageProvider? imageProvider;
+        if (profilePicture != null) {
+          if (profilePicture.startsWith('assets/')) {
+            imageProvider = AssetImage(profilePicture);
+          } else if (profilePicture.startsWith('http')) {
+            imageProvider = NetworkImage(profilePicture);
+          }
+        }
+
+        return CircleAvatar(
+          radius: 50,
+          backgroundColor: themeProvider.secondaryColor.withOpacity(0.2),
+          backgroundImage: imageProvider,
+          child: imageProvider == null
+              ? Text(
+                  username.isNotEmpty ? username[0].toUpperCase() : '?',
+                  style: GoogleFonts.ericaOne(
+                    color: themeProvider.secondaryColor,
+                    fontSize: 48,
+                  ),
+                )
+              : null,
+        );
+      },
     );
   }
 }
