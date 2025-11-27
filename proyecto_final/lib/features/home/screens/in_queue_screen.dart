@@ -334,17 +334,17 @@ class _InQueueScreenState extends State<InQueueScreen> {
                               ),
                               const SizedBox(height: 20),
                               SizedBox(
-                                height: 300,
-                                width: 300,
+                                height: 250,
+                                width: 250,
                                 child: Stack(
                                   alignment: Alignment.center,
                                   children: [
                                     SizedBox(
-                                      width: 280,
-                                      height: 280,
+                                      width: 230,
+                                      height: 230,
                                       child: CircularProgressIndicator(
                                         value: progress,
-                                        strokeWidth: 20,
+                                        strokeWidth: 18,
                                         backgroundColor: themeProvider.textPrimary.withOpacity(0.2),
                                         valueColor: AlwaysStoppedAnimation<Color>(
                                           themeProvider.secondaryColor,
@@ -358,7 +358,7 @@ class _InQueueScreenState extends State<InQueueScreen> {
                                           '$position',
                                           style: GoogleFonts.ericaOne(
                                             color: themeProvider.textPrimary,
-                                            fontSize: 120,
+                                            fontSize: 100,
                                             height: 1.0,
                                           ),
                                         ),
@@ -366,7 +366,7 @@ class _InQueueScreenState extends State<InQueueScreen> {
                                           'Place',
                                           style: GoogleFonts.ericaOne(
                                             color: themeProvider.textPrimary,
-                                            fontSize: 35,
+                                            fontSize: 30,
                                           ),
                                         ),
                                       ],
@@ -376,25 +376,21 @@ class _InQueueScreenState extends State<InQueueScreen> {
                               ),
                               const SizedBox(height: 20),
                               Text(
-                                position == 1
-                                    ? "YOU'RE NEXT IN LINE!\nGET READY!"
-                                    : "WE'LL LET YOU KNOW WHEN\nYOUR TURN IS CLOSE!",
+                                '${_queueData?.title ?? 'Queue'} queue',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.ericaOne(
+                                  color: themeProvider.secondaryColor,
+                                  fontSize: 28,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                "WE'LL LET YOU KNOW WHEN\nYOUR TURN IS CLOSE!",
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.lexendDeca(
                                   color: themeProvider.textPrimary,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                position == 1
-                                    ? 'Fast or you might miss your turn!'
-                                    : 'You can close this app in the meantime',
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.lexendDeca(
-                                  color: Colors.white70,
-                                  fontSize: 16,
                                 ),
                               ),
                               const SizedBox(height: 20),
