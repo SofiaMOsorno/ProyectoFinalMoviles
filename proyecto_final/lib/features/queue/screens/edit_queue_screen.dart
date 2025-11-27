@@ -31,7 +31,7 @@ class _EditQueueScreenState extends State<EditQueueScreen> {
 
   final Map<String, String> _infoMessages = {
     'Maximum people:': 'Maximum number of users allowed simultaneously in the queue.',
-    'Timer (seconds):': 'This sets how long each user stays at the front of the queue before being automatically moved.',
+    'Timer (seconds):': 'This sets how long each user stays at the front of the queue before being automatically moved back.',
     'File URL': 'Paste a URL to a menu, website, PDF, or any online resource you want users to see while waiting in the queue.\n\nExamples:\n• Restaurant menu (PDF)\n• Website with instructions\n• Image with information\n\nThis field is optional.',
     'Notifications': 'Enable alerts so you receive updates when someone joins or reaches the front of the queue.',
   };

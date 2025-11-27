@@ -128,20 +128,6 @@ class QueueService {
     required String username,
   }) async {
     try {
-      final queueDoc = await _firestore.collection('queues').doc(queueId).get();
-
-      if (!queueDoc.exists) {
-        throw 'Queue not found';
-      }
-
-      final queueData = queueDoc.data()!;
-      final currentCount = queueData['currentCount'] ?? 0;
-      final maxPeople = queueData['maxPeople'];
-
-      if (maxPeople != null && currentCount >= maxPeople) {
-        throw 'Queue is full';
-      }
-
       final existingMember = await _firestore
           .collection('queues')
           .doc(queueId)
@@ -153,32 +139,50 @@ class QueueService {
         throw 'User already in queue';
       }
 
-      final memberData = {
-        'userId': userId,
-        'username': username,
-        'position': currentCount,
-        'joinedAt': FieldValue.serverTimestamp(),
-      };
+      final queueDocRef = _firestore.collection('queues').doc(queueId);
 
-      DocumentReference memberRef = await _firestore
-          .collection('queues')
-          .doc(queueId)
-          .collection('members')
-          .add(memberData);
+      String? memberId;
 
-      // Try to update counter, but don't fail if it doesn't work (member is already added)
-      try {
-        await _firestore.collection('queues').doc(queueId).update({
-          'currentCount': FieldValue.increment(1),
+      await _firestore.runTransaction((transaction) async {
+        final queueDoc = await transaction.get(queueDocRef);
+
+        if (!queueDoc.exists) {
+          throw 'Queue not found';
+        }
+
+        final queueData = queueDoc.data()!;
+        final currentCount = queueData['currentCount'] ?? 0;
+        final maxPeople = queueData['maxPeople'];
+
+        if (maxPeople != null && currentCount >= maxPeople) {
+          throw 'Queue is full';
+        }
+
+        final memberRef = _firestore
+            .collection('queues')
+            .doc(queueId)
+            .collection('members')
+            .doc();
+
+        memberId = memberRef.id;
+
+        final memberData = {
+          'userId': userId,
+          'username': username,
+          'position': currentCount,
+          'joinedAt': FieldValue.serverTimestamp(),
+        };
+
+        transaction.set(memberRef, memberData);
+
+        final newCount = currentCount + 1;
+        transaction.update(queueDocRef, {
+          'currentCount': newCount,
           'updatedAt': FieldValue.serverTimestamp(),
         });
-      } catch (updateError) {
-        // Counter update failed (probably permissions), but member was added successfully
-        // This is okay - we'll calculate count dynamically if needed
-        print('Warning: Could not update queue counter: $updateError');
-      }
+      });
 
-      return memberRef.id;
+      return memberId!;
     } catch (e) {
       throw 'Error joining queue: $e';
     }
