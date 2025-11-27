@@ -272,39 +272,21 @@ class _QueueQrScreenState extends State<QueueQrScreen> {
                   elevation: 0,
                 ),
                 onPressed: () => _downloadQrCode(context),
-                child: Icon(
-                  Icons.download,
-                  color: themeProvider.textPrimary,
-                  size: 40,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: SizedBox(
-              height: 70,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: themeProvider.secondaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 0,
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Funcionalidad de compartir proximamente'),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("DOWNLOAD QR",
+                      style: GoogleFonts.ericaOne(
+                        color: themeProvider.textPrimary,
+                        fontSize: 26,
+                      ),
                     ),
-                  );
-                },
-                child: Text(
-                  'SHARE',
-                  style: GoogleFonts.ericaOne(
-                    color: themeProvider.textPrimary,
-                    fontSize: 28,
-                  ),
+                    Icon(
+                      Icons.download,
+                      color: themeProvider.textPrimary,
+                      size: 40,
+                    ),
+                  ],
                 ),
               ),
             ),

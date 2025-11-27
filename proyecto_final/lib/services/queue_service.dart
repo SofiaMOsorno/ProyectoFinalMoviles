@@ -189,6 +189,19 @@ class QueueService {
     required String memberId,
   }) async {
     try {
+      // Primero obtener el documento para verificar
+      final memberDoc = await _firestore
+          .collection('queues')
+          .doc(queueId)
+          .collection('members')
+          .doc(memberId)
+          .get();
+
+      if (!memberDoc.exists) {
+        throw 'Member not found in queue';
+      }
+
+      // Eliminar usando el método correcto
       await _firestore
           .collection('queues')
           .doc(queueId)
@@ -196,7 +209,7 @@ class QueueService {
           .doc(memberId)
           .delete();
 
-      // Try to update counter, but don't fail if it doesn't work (member is already removed)
+      // Intentar actualizar contador
       try {
         await _firestore.collection('queues').doc(queueId).update({
           'currentCount': FieldValue.increment(-1),
@@ -208,6 +221,7 @@ class QueueService {
 
       await _reorderQueuePositions(queueId);
     } catch (e) {
+      print('Error in removeMemberFromQueue: $e');
       throw 'Error removing member from queue: $e';
     }
   }
