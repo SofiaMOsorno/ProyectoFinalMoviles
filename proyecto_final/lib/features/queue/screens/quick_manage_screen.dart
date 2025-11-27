@@ -46,15 +46,17 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
     });
 
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        if (_remainingSeconds > 0) {
+      if (_remainingSeconds > 0) {
+        setState(() {
           _remainingSeconds--;
-        } else {
+        });
+      } else {
+        timer.cancel();
+        setState(() {
           _isTimerActive = false;
-          timer.cancel();
-          _removeCurrentUser(memberId, isTimeout: true);
-        }
-      });
+        });
+        _removeCurrentUser(memberId, isTimeout: true);
+      }
     });
   }
 
@@ -68,13 +70,16 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
   }
 
   Future<void> _removeCurrentUser(String memberId, {bool isTimeout = false}) async {
+    _countdownTimer?.cancel();
+    setState(() {
+      _isTimerActive = false;
+    });
+
     try {
       await _queueService.removeMemberFromQueue(
         queueId: widget.queueId,
         memberId: memberId,
       );
-
-      _stopCountdown();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
