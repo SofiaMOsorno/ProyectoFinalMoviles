@@ -100,6 +100,19 @@ class QueueService {
     }
   }
 
+  Stream<QueueModel?> getQueueStream(String queueId) {
+    return _firestore
+        .collection('queues')
+        .doc(queueId)
+        .snapshots()
+        .map((snapshot) {
+      if (!snapshot.exists) {
+        return null;
+      }
+      return QueueModel.fromDocument(snapshot);
+    });
+  }
+
   Stream<List<QueueModel>> getUserQueues(String userId) {
     return _firestore
         .collection('queues')

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/qr_code_widget.dart';
 import 'package:proyecto_final/features/queue/screens/big_qr_screen.dart';
+import 'package:proyecto_final/features/queue/screens/quick_manage_screen.dart';
 import 'package:gal/gal.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:ui' as ui;
@@ -236,13 +237,14 @@ class _QueueQrScreenState extends State<QueueQrScreen> {
           elevation: 0,
         ),
         onPressed: () {
-          Navigator.pushNamed(
+          Navigator.push(
             context,
-            '/management',
-            arguments: {
-              'queueName': 'My Queue',
-              'queueId': widget.queueId,
-            },
+            MaterialPageRoute(
+              builder: (_) => QuickManageScreen(
+                queueId: widget.queueId,
+                queueName: 'My Queue',
+              ),
+            ),
           );
         },
         child: Text(
