@@ -8,6 +8,7 @@ import 'package:proyecto_final/features/home/screens/in_queue_screen.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/services/guest_session_service.dart';
 import 'package:proyecto_final/models/queue_model.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
 
@@ -20,6 +21,7 @@ class JoinScreen extends StatefulWidget {
 
 class _JoinScreenState extends State<JoinScreen> {
   MobileScannerController cameraController = MobileScannerController();
+  final TextEditingController _codeController = TextEditingController();
   bool _isProcessing = false;
   String? _clipboardQueueId;
   bool _showClipboardBanner = false;
@@ -33,6 +35,7 @@ class _JoinScreenState extends State<JoinScreen> {
   @override
   void dispose() {
     cameraController.dispose();
+    _codeController.dispose();
     super.dispose();
   }
 
@@ -66,8 +69,13 @@ class _JoinScreenState extends State<JoinScreen> {
     final String? queueId = barcodes.first.rawValue;
     if (queueId == null || queueId.isEmpty) return;
 
-    setState(() => _isProcessing = true);
+    await _processQueueId(queueId);
+  }
 
+  Future<void> _processQueueId(String queueId) async {
+    if (_isProcessing) return;
+
+    setState(() => _isProcessing = true);
     cameraController.stop();
 
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
@@ -99,6 +107,25 @@ class _JoinScreenState extends State<JoinScreen> {
         _showErrorDialog(context, themeProvider, 'Error loading queue: $e');
       }
     }
+  }
+
+  Future<void> _handleManualCode() async {
+    final code = _codeController.text.trim();
+    
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please enter a queue code',
+            style: GoogleFonts.lexendDeca(),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    await _processQueueId(code);
   }
 
   void _showQueueConfirmationDialog(
@@ -263,40 +290,7 @@ class _JoinScreenState extends State<JoinScreen> {
 
   Future<void> _joinFromClipboard() async {
     if (_clipboardQueueId == null) return;
-
-    setState(() => _isProcessing = true);
-    cameraController.stop();
-
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final queueService = QueueService();
-
-    try {
-      final queue = await queueService.getQueue(_clipboardQueueId!);
-
-      if (queue == null) {
-        if (mounted) {
-          _showErrorDialog(context, themeProvider, 'Queue not found');
-        }
-        return;
-      }
-
-      if (!queue.isActive) {
-        if (mounted) {
-          _showErrorDialog(context, themeProvider, 'This queue is no longer active');
-        }
-        return;
-      }
-
-      if (mounted) {
-        setState(() => _showClipboardBanner = false);
-        _showQueueConfirmationDialog(context, themeProvider, authService, queueService, queue);
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorDialog(context, themeProvider, 'Error loading queue: $e');
-      }
-    }
+    await _processQueueId(_clipboardQueueId!);
   }
 
   void _showErrorDialog(BuildContext context, ThemeProvider themeProvider, String message) {
@@ -426,6 +420,13 @@ class _JoinScreenState extends State<JoinScreen> {
                           username: name,
                         );
 
+                        final guestSessionService = GuestSessionService();
+                        await guestSessionService.saveGuestSession(
+                          guestUserId: guestUserId,
+                          queueId: queue.id,
+                          userName: name,
+                        );
+
                         if (context.mounted) {
                           Navigator.push(
                             context,
@@ -533,9 +534,12 @@ class _JoinScreenState extends State<JoinScreen> {
               Expanded(
                 child: Stack(
                   children: [
-                    MobileScanner(
-                      controller: cameraController,
-                      onDetect: (capture) => _onQRCodeDetected(capture, context),
+                    ClipRect(
+                      child: MobileScanner(
+                        controller: cameraController,
+                        fit: BoxFit.cover,
+                        onDetect: (capture) => _onQRCodeDetected(capture, context),
+                      ),
                     ),
                     Center(
                       child: Container(
@@ -625,30 +629,79 @@ class _JoinScreenState extends State<JoinScreen> {
                           behavior: HitTestBehavior.translucent,
                         ),
                       ),
-                    Positioned(
-                      bottom: 20,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Text(
-                            'Align QR code within the frame',
-                            style: GoogleFonts.lexendDeca(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                  ],
+                ),
+              ),
+              // Input manual de código
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: themeProvider.backgroundColor,
+                  border: Border(
+                    top: BorderSide(
+                      color: themeProvider.secondaryColor,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Scan QR or paste the code here',
+                      style: GoogleFonts.lexendDeca(
+                        color: themeProvider.secondaryColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: themeProvider.textPrimary,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: themeProvider.secondaryColor,
+                                width: 2,
+                              ),
+                            ),
+                            child: TextField(
+                              controller: _codeController,
+                              style: GoogleFonts.lexendDeca(
+                                color: Colors.black,
+                                fontSize: 16,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Enter queue code',
+                                hintStyle: GoogleFonts.lexendDeca(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                                border: InputBorder.none,
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: themeProvider.secondaryColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_forward),
+                            color: themeProvider.textPrimary,
+                            iconSize: 28,
+                            onPressed: _isProcessing ? null : _handleManualCode,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

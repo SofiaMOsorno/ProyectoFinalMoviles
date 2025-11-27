@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/shared/widgets/qr_code_widget.dart';
 import 'package:proyecto_final/features/queue/screens/big_qr_screen.dart';
+import 'package:proyecto_final/features/queue/screens/quick_manage_screen.dart';
 import 'package:gal/gal.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:ui' as ui;
@@ -236,13 +237,14 @@ class _QueueQrScreenState extends State<QueueQrScreen> {
           elevation: 0,
         ),
         onPressed: () {
-          Navigator.pushNamed(
+          Navigator.push(
             context,
-            '/management',
-            arguments: {
-              'queueName': 'My Queue',
-              'queueId': widget.queueId,
-            },
+            MaterialPageRoute(
+              builder: (_) => QuickManageScreen(
+                queueId: widget.queueId,
+                queueName: 'My Queue',
+              ),
+            ),
           );
         },
         child: Text(
@@ -272,39 +274,21 @@ class _QueueQrScreenState extends State<QueueQrScreen> {
                   elevation: 0,
                 ),
                 onPressed: () => _downloadQrCode(context),
-                child: Icon(
-                  Icons.download,
-                  color: themeProvider.textPrimary,
-                  size: 40,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: SizedBox(
-              height: 70,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: themeProvider.secondaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 0,
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Funcionalidad de compartir proximamente'),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("DOWNLOAD QR",
+                      style: GoogleFonts.ericaOne(
+                        color: themeProvider.textPrimary,
+                        fontSize: 26,
+                      ),
                     ),
-                  );
-                },
-                child: Text(
-                  'SHARE',
-                  style: GoogleFonts.ericaOne(
-                    color: themeProvider.textPrimary,
-                    fontSize: 28,
-                  ),
+                    Icon(
+                      Icons.download,
+                      color: themeProvider.textPrimary,
+                      size: 40,
+                    ),
+                  ],
                 ),
               ),
             ),

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/services/guest_session_service.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
+import 'package:proyecto_final/models/queue_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class InQueueScreen extends StatefulWidget {
   final String queueId;
@@ -23,6 +27,194 @@ class InQueueScreen extends StatefulWidget {
 
 class _InQueueScreenState extends State<InQueueScreen> {
   final QueueService _queueService = QueueService();
+  QueueModel? _queueData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQueueData();
+  }
+
+  Future<void> _loadQueueData() async {
+    try {
+      final queue = await _queueService.getQueue(widget.queueId);
+      if (mounted) {
+        setState(() {
+          _queueData = queue;
+        });
+      }
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+
+  Future<void> _shareQueueCode(ThemeProvider themeProvider) async {
+    await Clipboard.setData(ClipboardData(text: widget.queueId));
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Queue code copied to clipboard!',
+            style: GoogleFonts.lexendDeca(),
+          ),
+          backgroundColor: themeProvider.secondaryColor,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _launchURL(String url, ThemeProvider themeProvider) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening link: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showFollowLinkDialog(ThemeProvider themeProvider, String url) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: themeProvider.textField,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: themeProvider.secondaryColor,
+                width: 10,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'FOLLOW LINK?',
+                  style: GoogleFonts.ericaOne(
+                    color: themeProvider.secondaryColor,
+                    fontSize: 36,
+                  ),
+                ),
+                //const SizedBox(height: 16),
+                Text(
+                  'You will be redirected to the extra media your admin left for you',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.lexendDeca(
+                    color: themeProvider.secondaryColor,
+                    fontSize: 18,
+                  ),
+                ),
+                //const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: themeProvider.secondaryColor,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    _launchURL(url, themeProvider);
+                  },
+                  child: Text(
+                    'CONTINUE',
+                    style: GoogleFonts.ericaOne(
+                      color: themeProvider.textPrimary,
+                      fontSize: 28,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: themeProvider.backgroundColor,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                  },
+                  child: Text(
+                    'CANCEL',
+                    style: GoogleFonts.ericaOne(
+                      color: themeProvider.textPrimary,
+                      fontSize: 28,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showInfoDialog(ThemeProvider themeProvider) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: themeProvider.textPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: themeProvider.secondaryColor,
+              width: 3,
+            ),
+          ),
+          title: Text(
+            'Follow Link Button',
+            style: GoogleFonts.ericaOne(
+              color: themeProvider.secondaryColor,
+              fontSize: 22,
+            ),
+          ),
+          content: Text(
+            'This button will redirect you to the extra resources. It could be a menu, publicity, a website, or even anything!',
+            style: GoogleFonts.lexendDeca(
+              color: themeProvider.backgroundColor,
+              fontSize: 16,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'GOT IT',
+                style: GoogleFonts.ericaOne(
+                  color: themeProvider.secondaryColor,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +329,7 @@ class _InQueueScreenState extends State<InQueueScreen> {
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.ericaOne(
                                   color: themeProvider.textPrimary,
-                                  fontSize: 40,
+                                  fontSize: 30,
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -183,7 +375,6 @@ class _InQueueScreenState extends State<InQueueScreen> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              const SizedBox(height: 20),
                               Text(
                                 "WE'LL LET YOU KNOW WHEN\nYOUR TURN IS CLOSE!",
                                 textAlign: TextAlign.center,
@@ -202,9 +393,20 @@ class _InQueueScreenState extends State<InQueueScreen> {
                                   fontSize: 16,
                                 ),
                               ),
+                              const SizedBox(height: 20),
+                              // Botón para compartir código
+                              _buildShareCodeButton(themeProvider),
                             ],
                           ),
-                          _buildLeaveQueueButton(context, themeProvider, userMember),
+                          Column(
+                            children: [
+                              // Sección de enlace extra (solo si existe)
+                              if (_queueData?.fileUrl != null && _queueData!.fileUrl!.isNotEmpty)
+                                _buildExtraLinkSection(themeProvider),
+                              const SizedBox(height: 16),
+                              _buildLeaveQueueButton(context, themeProvider, userMember),
+                            ],
+                          ),
                         ],
                       ),
                     );
@@ -218,13 +420,112 @@ class _InQueueScreenState extends State<InQueueScreen> {
     );
   }
 
+  Widget _buildShareCodeButton(ThemeProvider themeProvider) {
+    return SizedBox(
+      width: double.infinity,
+      height: 45,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: themeProvider.secondaryColor.withOpacity(0.2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+            side: BorderSide(
+              color: themeProvider.secondaryColor,
+              width: 2,
+            ),
+          ),
+          elevation: 0,
+        ),
+        icon: Icon(
+          Icons.share,
+          color: themeProvider.secondaryColor,
+          size: 24,
+        ),
+        label: Text(
+          'SHARE CODE',
+          style: GoogleFonts.ericaOne(
+            color: themeProvider.secondaryColor,
+            fontSize: 22,
+          ),
+        ),
+        onPressed: () => _shareQueueCode(themeProvider),
+      ),
+    );
+  }
+
+  Widget _buildExtraLinkSection(ThemeProvider themeProvider) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                'The admin has left this extra media for you',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.lexendDeca(
+                  color: themeProvider.secondaryColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => _showInfoDialog(themeProvider),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: themeProvider.secondaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.info_outline,
+                  color: themeProvider.textPrimary,
+                  size: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 45,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: themeProvider.secondaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              elevation: 0,
+            ),
+            icon: Icon(
+              Icons.link,
+              color: themeProvider.textPrimary,
+              size: 24,
+            ),
+            label: Text(
+              'FOLLOW LINK',
+              style: GoogleFonts.ericaOne(
+                color: themeProvider.textPrimary,
+                fontSize: 24,
+              ),
+            ),
+            onPressed: () => _showFollowLinkDialog(themeProvider, _queueData!.fileUrl!),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildLeaveQueueButton(
     BuildContext context,
     ThemeProvider themeProvider,
     QueueMemberModel userMember,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 40),
+      padding: const EdgeInsets.only(bottom: 10),
       child: SizedBox(
         width: double.infinity,
         height: 80,
@@ -282,6 +583,11 @@ class _InQueueScreenState extends State<InQueueScreen> {
                               queueId: widget.queueId,
                               memberId: userMember.id,
                             );
+
+                            if (widget.userId.startsWith('guest_')) {
+                              final guestSessionService = GuestSessionService();
+                              await guestSessionService.clearGuestSession();
+                            }
 
                             if (context.mounted) {
                               Navigator.pop(modalContext);

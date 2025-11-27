@@ -100,6 +100,19 @@ class QueueService {
     }
   }
 
+  Stream<QueueModel?> getQueueStream(String queueId) {
+    return _firestore
+        .collection('queues')
+        .doc(queueId)
+        .snapshots()
+        .map((snapshot) {
+      if (!snapshot.exists) {
+        return null;
+      }
+      return QueueModel.fromDocument(snapshot);
+    });
+  }
+
   Stream<List<QueueModel>> getUserQueues(String userId) {
     return _firestore
         .collection('queues')
@@ -128,20 +141,6 @@ class QueueService {
     required String username,
   }) async {
     try {
-      final queueDoc = await _firestore.collection('queues').doc(queueId).get();
-
-      if (!queueDoc.exists) {
-        throw 'Queue not found';
-      }
-
-      final queueData = queueDoc.data()!;
-      final currentCount = queueData['currentCount'] ?? 0;
-      final maxPeople = queueData['maxPeople'];
-
-      if (maxPeople != null && currentCount >= maxPeople) {
-        throw 'Queue is full';
-      }
-
       final existingMember = await _firestore
           .collection('queues')
           .doc(queueId)
@@ -153,32 +152,50 @@ class QueueService {
         throw 'User already in queue';
       }
 
-      final memberData = {
-        'userId': userId,
-        'username': username,
-        'position': currentCount,
-        'joinedAt': FieldValue.serverTimestamp(),
-      };
+      final queueDocRef = _firestore.collection('queues').doc(queueId);
 
-      DocumentReference memberRef = await _firestore
-          .collection('queues')
-          .doc(queueId)
-          .collection('members')
-          .add(memberData);
+      String? memberId;
 
-      // Try to update counter, but don't fail if it doesn't work (member is already added)
-      try {
-        await _firestore.collection('queues').doc(queueId).update({
-          'currentCount': FieldValue.increment(1),
+      await _firestore.runTransaction((transaction) async {
+        final queueDoc = await transaction.get(queueDocRef);
+
+        if (!queueDoc.exists) {
+          throw 'Queue not found';
+        }
+
+        final queueData = queueDoc.data()!;
+        final currentCount = queueData['currentCount'] ?? 0;
+        final maxPeople = queueData['maxPeople'];
+
+        if (maxPeople != null && currentCount >= maxPeople) {
+          throw 'Queue is full';
+        }
+
+        final memberRef = _firestore
+            .collection('queues')
+            .doc(queueId)
+            .collection('members')
+            .doc();
+
+        memberId = memberRef.id;
+
+        final memberData = {
+          'userId': userId,
+          'username': username,
+          'position': currentCount,
+          'joinedAt': FieldValue.serverTimestamp(),
+        };
+
+        transaction.set(memberRef, memberData);
+
+        final newCount = currentCount + 1;
+        transaction.update(queueDocRef, {
+          'currentCount': newCount,
           'updatedAt': FieldValue.serverTimestamp(),
         });
-      } catch (updateError) {
-        // Counter update failed (probably permissions), but member was added successfully
-        // This is okay - we'll calculate count dynamically if needed
-        print('Warning: Could not update queue counter: $updateError');
-      }
+      });
 
-      return memberRef.id;
+      return memberId!;
     } catch (e) {
       throw 'Error joining queue: $e';
     }
@@ -189,6 +206,19 @@ class QueueService {
     required String memberId,
   }) async {
     try {
+      // Primero obtener el documento para verificar
+      final memberDoc = await _firestore
+          .collection('queues')
+          .doc(queueId)
+          .collection('members')
+          .doc(memberId)
+          .get();
+
+      if (!memberDoc.exists) {
+        throw 'Member not found in queue';
+      }
+
+      // Eliminar usando el método correcto
       await _firestore
           .collection('queues')
           .doc(queueId)
@@ -196,7 +226,7 @@ class QueueService {
           .doc(memberId)
           .delete();
 
-      // Try to update counter, but don't fail if it doesn't work (member is already removed)
+      // Intentar actualizar contador
       try {
         await _firestore.collection('queues').doc(queueId).update({
           'currentCount': FieldValue.increment(-1),
@@ -208,6 +238,7 @@ class QueueService {
 
       await _reorderQueuePositions(queueId);
     } catch (e) {
+      print('Error in removeMemberFromQueue: $e');
       throw 'Error removing member from queue: $e';
     }
   }
