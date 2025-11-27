@@ -37,7 +37,19 @@ class ProfilePictureService {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // Primero verificar si hay una imagen preestablecida
+      final localPath = prefs.getString('$_localProfilePictureKey\_$userId');
+      if (localPath != null) {
+        final file = File(localPath);
+        if (await file.exists()) {
+          return {
+            'type': 'local',
+            'path': localPath,
+          };
+        } else {
+          await prefs.remove('$_localProfilePictureKey\_$userId');
+        }
+      }
+
       final presetPath = prefs.getString('$_presetProfilePictureKey\_$userId');
       if (presetPath != null) {
         return {
@@ -45,9 +57,6 @@ class ProfilePictureService {
           'path': presetPath,
         };
       }
-
-      // Si no, verificar imagen local
-      final localPath = prefs.getString('$_localProfilePictureKey\_$userId');
       if (localPath != null) {
         final file = File(localPath);
         if (await file.exists()) {
@@ -79,7 +88,6 @@ class ProfilePictureService {
         await prefs.remove('$_localProfilePictureKey\_$userId');
       }
     } catch (e) {
-      // Silently fail if there's no local picture to delete
     }
   }
 
@@ -90,6 +98,20 @@ class ProfilePictureService {
       return prefs.getString('$_presetProfilePictureKey\_$userId');
     } catch (e) {
       return null;
+    }
+  }
+
+  // Guardar una imagen desde galería
+  Future<String?> saveGalleryProfilePicture(String filePath, String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('$_localProfilePictureKey\_$userId', filePath);
+      // Limpiar imagen preset si existe
+      await prefs.remove('$_presetProfilePictureKey\_$userId');
+
+      return filePath;
+    } catch (e) {
+      throw 'Error saving gallery image: $e';
     }
   }
 }

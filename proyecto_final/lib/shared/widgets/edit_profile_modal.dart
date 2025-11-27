@@ -4,6 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/services/profile_picture_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EditProfileModal extends StatefulWidget {
   const EditProfileModal({super.key});
@@ -20,6 +24,8 @@ class _EditProfileModalState extends State<EditProfileModal> {
   bool _isLoadingName = false;
   bool _isLoadingPicture = false;
   String _currentUsername = '';
+  File? _selectedGalleryImage;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -34,10 +40,16 @@ class _EditProfileModalState extends State<EditProfileModal> {
     if (user != null) {
       final userData = await authService.getUserData(user.uid);
       final currentPreset = await _pictureService.getCurrentPresetImage(user.uid);
+      final profilePicData = await _pictureService.getProfilePicturePath(user.uid);
       setState(() {
         _currentUsername = userData?['username'] ?? user.displayName ?? 'User';
         _nameController.text = _currentUsername;
         _selectedPresetImage = currentPreset;
+        
+        // Cargar imagen de galería si existe
+        if (profilePicData['type'] == 'local' && profilePicData['path'] != null) {
+          _selectedGalleryImage = File(profilePicData['path']!);
+        }
       });
     }
   }
@@ -117,6 +129,85 @@ class _EditProfileModalState extends State<EditProfileModal> {
           uid: user.uid,
           profilePicture: _selectedPresetImage,
         );
+
+        if (mounted) {
+          _showSuccessSnackBar('Profile picture updated successfully');
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            Navigator.pop(context);
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackBar('Error updating picture: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingPicture = false);
+      }
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final status = await Permission.photos.request();
+      
+      if (status.isGranted || status.isLimited) {
+        final XFile? pickedFile = await _picker.pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 1024,
+          maxHeight: 1024,
+          imageQuality: 85,
+        );
+
+        if (pickedFile != null) {
+          setState(() {
+            _selectedGalleryImage = File(pickedFile.path);
+            _selectedPresetImage = null;
+          });
+        }
+      } else if (status.isPermanentlyDenied) {
+        _showErrorSnackBar('Please enable gallery access in settings');
+      } else {
+        _showErrorSnackBar('Gallery access denied');
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error picking image: $e');
+    }
+  }
+
+  Future<void> _updateGalleryPicture() async {
+    if (_selectedGalleryImage == null) {
+      _showErrorSnackBar('No image selected');
+      return;
+    }
+
+    setState(() => _isLoadingPicture = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final user = authService.currentUser;
+
+      if (user != null) {
+        // Guardar localmente
+        await _pictureService.saveGalleryProfilePicture(
+          _selectedGalleryImage!.path,
+          user.uid,
+        );
+        
+        // Actualizar en Firebase con identificador
+        final profilePicturePath = 'gallery_${user.uid}';
+        await authService.updateUserProfile(
+          uid: user.uid,
+          profilePicture: profilePicturePath,
+        );
+        
+        // Actualizar tipo en Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'profilePictureType': 'gallery'});
 
         if (mounted) {
           _showSuccessSnackBar('Profile picture updated successfully');
@@ -393,6 +484,95 @@ class _EditProfileModalState extends State<EditProfileModal> {
                   ),
           ),
         ),
+        const SizedBox(height: 20),
+        Text(
+          'Or select a picture from your gallery',
+          style: GoogleFonts.lexendDeca(
+            color: themeProvider.secondaryColor,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: themeProvider.backgroundColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: _pickImageFromGallery,
+                  child: Text(
+                    'Select from gallery',
+                    style: GoogleFonts.lexendDeca(
+                      color: themeProvider.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_selectedGalleryImage != null) ...[
+              const SizedBox(width: 12),
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: themeProvider.secondaryColor,
+                    width: 3,
+                  ),
+                ),
+                child: ClipOval(
+                  child: Image.file(
+                    _selectedGalleryImage!,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (_selectedGalleryImage != null)
+          SizedBox(
+            width: double.infinity,
+            height: 60,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: themeProvider.secondaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 0,
+              ),
+              onPressed: !_isLoadingPicture ? _updateGalleryPicture : null,
+              child: _isLoadingPicture
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: themeProvider.textPrimary,
+                  ),
+                )
+              : Text(
+                  'CONFIRM PICTURE',
+                  style: GoogleFonts.ericaOne(
+                    color: themeProvider.textPrimary,
+                    fontSize: 22,
+                  ),
+                ),
+            ),
+          ),
       ],
     );
   }

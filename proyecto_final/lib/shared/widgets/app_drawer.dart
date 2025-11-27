@@ -150,7 +150,7 @@ class AppDrawer extends StatelessWidget {
           _buildMenuItem(
             context,
             themeProvider,
-            'Created Queues',
+            'Queues',
             Icons.star,
             () {
               Navigator.pop(context);
@@ -292,6 +292,10 @@ class AppDrawer extends StatelessWidget {
       // Usuario seleccionó una imagen preset
       pictureType = 'preset';
       picturePath = pictureData['path'];
+    } else if (pictureData['type'] == 'local' && pictureData['path'] != null) {
+      // Usuario seleccionó imagen de galería (guardada localmente)
+      pictureType = 'local';
+      picturePath = pictureData['path'];
     } else if (userData != null && userData['profilePicture'] != null) {
       final firebasePicture = userData['profilePicture'] as String;
       if (firebasePicture.startsWith('assets/')) {
@@ -325,7 +329,14 @@ class AppDrawer extends StatelessWidget {
     }
 
     if (pictureType == 'local' && picturePath != null) {
-      return FileImage(File(picturePath));
+      final file = File(picturePath);
+      if (file.existsSync()) {
+        return FileImage(file);
+      }
+    }
+    
+    if (pictureType == 'gallery' && picturePath != null) {
+      return null;
     }
 
     if (networkUrl != null) {

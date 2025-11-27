@@ -29,6 +29,7 @@ class AuthService {
         'email': email,
         'createdAt': FieldValue.serverTimestamp(),
         'profilePicture': null,
+        'profilePictureType': null,
       });
 
       return userCredential;

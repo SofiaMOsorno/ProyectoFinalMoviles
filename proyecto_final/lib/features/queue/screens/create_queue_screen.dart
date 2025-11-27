@@ -132,11 +132,11 @@ class _CreateQueueScreenState extends State<CreateQueueScreen> {
               color: themeProvider.secondaryColor,
             ),
             child: Text(
-              "CREATE A QUEUE",
+              "CREATE QUEUE",
               textAlign: TextAlign.center,
               style: GoogleFonts.ericaOne(
                 color: themeProvider.backgroundColor,
-                fontSize: 36,
+                fontSize: 34,
                 height: 1.0,
               ),
             ),

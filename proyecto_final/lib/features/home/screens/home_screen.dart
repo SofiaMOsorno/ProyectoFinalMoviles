@@ -60,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           backgroundColor: themeProvider.secondaryColor,
                           textStyle: GoogleFonts.ericaOne(
                             color: themeProvider.primaryColor,
-                            fontSize: 43,
+                            fontSize: 40,
                           ),
                           onPressed: () async {
                             setState(() {
@@ -110,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           backgroundColor: themeProvider.secondaryColor,
                           textStyle: GoogleFonts.ericaOne(
                             color: themeProvider.backgroundColor,
-                            fontSize: 43,
+                            fontSize: 40,
                           ),
                           onPressed: () async {
                             setState(() {

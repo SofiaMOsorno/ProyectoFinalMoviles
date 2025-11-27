@@ -49,7 +49,7 @@ class _CreatedQueuesScreenState extends State<CreatedQueuesScreen> {
               color: themeProvider.secondaryColor,
             ),
             child: Text(
-              "CREATED QUEUE",
+              "QUEUES",
               textAlign: TextAlign.center,
               style: GoogleFonts.ericaOne(
                 color: themeProvider.primaryColor,
