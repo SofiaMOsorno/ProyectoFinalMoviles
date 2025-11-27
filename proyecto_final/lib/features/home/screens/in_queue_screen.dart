@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/services/guest_session_service.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
 import 'package:proyecto_final/models/queue_model.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -582,6 +583,11 @@ class _InQueueScreenState extends State<InQueueScreen> {
                               queueId: widget.queueId,
                               memberId: userMember.id,
                             );
+
+                            if (widget.userId.startsWith('guest_')) {
+                              final guestSessionService = GuestSessionService();
+                              await guestSessionService.clearGuestSession();
+                            }
 
                             if (context.mounted) {
                               Navigator.pop(modalContext);

@@ -6,6 +6,7 @@ import 'package:proyecto_final/features/home/screens/join_screen.dart';
 import 'package:proyecto_final/features/home/screens/in_queue_screen.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/services/guest_session_service.dart';
 import 'package:proyecto_final/models/queue_model.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -123,8 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const Duration(milliseconds: 550));
 
                             final currentUser = authService.currentUser;
+                            final queueService = QueueService();
+                            final guestSessionService = GuestSessionService();
+
                             if (currentUser != null) {
-                              final queueService = QueueService();
                               try {
                                 final activeQueueData = await queueService.getUserActiveQueue(currentUser.uid);
 
@@ -161,12 +164,71 @@ class _HomeScreenState extends State<HomeScreen> {
                                 }
                               }
                             } else {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const JoinScreen(),
-                                ),
-                              );
+                              try {
+                                final guestSession = await guestSessionService.getGuestSession();
+
+                                if (guestSession != null) {
+                                  final queueId = guestSession['queueId']!;
+                                  final guestUserId = guestSession['guestUserId']!;
+                                  final userName = guestSession['userName']!;
+
+                                  final queue = await queueService.getQueue(queueId);
+
+                                  if (queue != null && queue.isActive) {
+                                    final members = await queueService.getQueueMembers(queueId).first;
+                                    final isStillInQueue = members.any((m) => m.userId == guestUserId);
+
+                                    if (isStillInQueue && context.mounted) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => InQueueScreen(
+                                            queueId: queueId,
+                                            userId: guestUserId,
+                                            userName: userName,
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      await guestSessionService.clearGuestSession();
+                                      if (context.mounted) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => const JoinScreen(),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  } else {
+                                    await guestSessionService.clearGuestSession();
+                                    if (context.mounted) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const JoinScreen(),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                } else if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const JoinScreen(),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const JoinScreen(),
+                                    ),
+                                  );
+                                }
+                              }
                             }
 
                             setState(() {
