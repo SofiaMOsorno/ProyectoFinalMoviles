@@ -35,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // ---------- TOP SECTION (CREATE QUEUE) ----------
           AnimatedContainer(
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOut,
@@ -56,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 100,
                         width: double.infinity,
                         child: CustomButton(
-                          text: isAuthenticated ? 'Create Queue' : 'Start a Queue',
+                          text: 'Create Queue',
                           borderRadius: 0,
                           backgroundColor: themeProvider.secondaryColor,
                           textStyle: GoogleFonts.ericaOne(
@@ -86,8 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
           ),
-
-          // ---------- BOTTOM SECTION (JOIN QUEUE) ----------
           AnimatedContainer(
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOut,
@@ -108,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 100,
                         width: double.infinity,
                         child: CustomButton(
-                          text: 'Join a Queue',
+                          text: 'Join Queue',
                           borderRadius: 0,
                           backgroundColor: themeProvider.secondaryColor,
                           textStyle: GoogleFonts.ericaOne(

@@ -132,7 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: CustomButton(
-                        text: 'Start a Queue',
+                        text: 'Create Queue',
                         height: 100,
                         backgroundColor: themeProvider.secondaryColor,
                         textStyle: GoogleFonts.ericaOne(

@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       child: CustomButton(
                         height: 100,
-                        text: 'Start a Queue',
+                        text: 'Create Queue',
                         backgroundColor: themeProvider.secondaryColor,
                         textStyle: GoogleFonts.ericaOne(
                           color: themeProvider.primaryColor,
