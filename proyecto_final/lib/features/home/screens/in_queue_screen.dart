@@ -376,7 +376,9 @@ class _InQueueScreenState extends State<InQueueScreen> {
                               ),
                               const SizedBox(height: 20),
                               Text(
-                                "WE'LL LET YOU KNOW WHEN\nYOUR TURN IS CLOSE!",
+                                position == 1
+                                    ? "YOU'RE NEXT IN LINE!\nGET READY!"
+                                    : "WE'LL LET YOU KNOW WHEN\nYOUR TURN IS CLOSE!",
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.lexendDeca(
                                   color: themeProvider.textPrimary,
@@ -386,7 +388,9 @@ class _InQueueScreenState extends State<InQueueScreen> {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'You can close this app in the meantime',
+                                position == 1
+                                    ? 'Fast or you might miss your turn!'
+                                    : 'You can close this app in the meantime',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.lexendDeca(
                                   color: Colors.white70,
