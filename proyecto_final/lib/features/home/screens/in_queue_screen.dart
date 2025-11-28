@@ -30,18 +30,7 @@ class _InQueueScreenState extends State<InQueueScreen> {
   final QueueService _queueService = QueueService();
   final QueueNotificationService _notificationService = QueueNotificationService();
   QueueModel? _queueData;
-  int? _lastPosition; // Track last known position
-
-  @override
-  void initState() {
-    super.initState();
-    _loadQueueData();
-    // Start listening to position changes for notifications
-    _notificationService.listenToQueuePositionChanges(
-      widget.queueId,
-      widget.userId,
-    );
-  }
+  int? _lastPosition;
 
   Future<void> _loadQueueData() async {
     try {
@@ -432,18 +421,16 @@ class _InQueueScreenState extends State<InQueueScreen> {
   }
 
   void _checkPositionChange(int currentPosition) {
-    // Only send notification if position changed
+    // Solo notificar si la posición cambió Y es 0 o 1
     if (_lastPosition != null && _lastPosition != currentPosition) {
-      if (currentPosition == 0) {
-        _notificationService.checkAndNotifyPosition(
-          widget.queueId,
-          widget.userId,
-        );
-      } else if (currentPosition == 1) {
-        _notificationService.checkAndNotifyPosition(
-          widget.queueId,
-          widget.userId,
-        );
+      if (currentPosition == 0 || currentPosition == 1) {
+        // Usar Future.delayed para evitar múltiples notificaciones
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _notificationService.checkAndNotifyPosition(
+            widget.queueId,
+            widget.userId,
+          );
+        });
       }
     }
     _lastPosition = currentPosition;

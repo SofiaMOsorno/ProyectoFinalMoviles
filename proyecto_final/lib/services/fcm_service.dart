@@ -30,6 +30,17 @@ class FCMService {
       print('User declined or has not accepted permission');
       return;
     }
+    if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      print('Notifications not authorized. Current status: ${settings.authorizationStatus}');
+      // Intentar solicitar permisos nuevamente
+      if (settings.authorizationStatus == AuthorizationStatus.notDetermined) {
+        await _messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
+    }
 
     // Initialize local notifications
     await _initializeLocalNotifications();

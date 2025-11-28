@@ -228,10 +228,18 @@ class QueueService {
 
       // Intentar actualizar contador pero silenciar errores de permisos para usuarios invitados
       try {
-        await _firestore.collection('queues').doc(queueId).update({
-          'currentCount': FieldValue.increment(-1),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        final queueDoc = await _firestore.collection('queues').doc(queueId).get();
+        if (queueDoc.exists) {
+          try {
+            await _firestore.collection('queues').doc(queueId).update({
+              'currentCount': FieldValue.increment(-1),
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+          } catch (e) {
+            // Solo loguear, no lanzar error para invitados
+            print('Info: Counter update skipped (guest user): $e');
+          }
+        }
       } catch (updateError) {
         // Silenciar el error porque el contador se sincronizará eventualmente
         print('Info: Queue counter not updated (expected for guest users): $updateError');
@@ -239,7 +247,11 @@ class QueueService {
 
       // Intentar reordenar posiciones y silenciar errores de permisos
       try {
-        await _reorderQueuePositions(queueId);
+        try {
+          await _reorderQueuePositions(queueId);
+        } catch (e) {
+          print('Info: Reorder skipped: $e');
+        }
       } catch (reorderError) {
         // Silenciar el error porque las posiciones se sincronizarán eventualmente
         print('Info: Queue positions not reordered (expected for guest users): $reorderError');
