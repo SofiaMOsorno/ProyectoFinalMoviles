@@ -195,7 +195,7 @@ class _JoinScreenState extends State<JoinScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: themeProvider.secondaryColor,
@@ -249,7 +249,7 @@ class _JoinScreenState extends State<JoinScreen> {
                     'JOIN',
                     style: GoogleFonts.ericaOne(
                       color: themeProvider.textPrimary,
-                      fontSize: 30,
+                      fontSize: 25,
                     ),
                   ),
                 ),
@@ -271,7 +271,7 @@ class _JoinScreenState extends State<JoinScreen> {
                     'CANCEL',
                     style: GoogleFonts.ericaOne(
                       color: themeProvider.textPrimary,
-                      fontSize: 30,
+                      fontSize: 25,
                     ),
                   ),
                 ),
@@ -360,6 +360,7 @@ class _JoinScreenState extends State<JoinScreen> {
                   style: GoogleFonts.ericaOne(
                     color: themeProvider.secondaryColor,
                     fontSize: 32,
+                    height: 1,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -396,7 +397,7 @@ class _JoinScreenState extends State<JoinScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: themeProvider.secondaryColor,
