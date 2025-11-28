@@ -302,6 +302,16 @@ class _InQueueScreenState extends State<InQueueScreen> {
                     );
 
                     if (userMember.position == -1) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/',
+                            (route) => false,
+                          );
+                        }
+                      });
+
                       return Center(
                         child: Text(
                           'You are not in the queue',
