@@ -10,6 +10,9 @@ import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/services/queue_service.dart';
 import 'package:proyecto_final/models/queue_model.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:proyecto_final/services/fcm_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class JoinScreen extends StatefulWidget {
   const JoinScreen({super.key});
@@ -207,6 +210,7 @@ class _JoinScreenState extends State<JoinScreen> {
                   onPressed: () async {
                     Navigator.pop(dialogContext);
                     final currentUser = authService.currentUser;
+                    final fcmService = Provider.of<FCMService>(context, listen: false);
 
                     if (currentUser != null) {
                       final userName = currentUser.displayName ??
@@ -214,11 +218,20 @@ class _JoinScreenState extends State<JoinScreen> {
                           'User';
 
                       try {
-                        await queueService.addMemberToQueue(
+                        // Get the FCM token
+                        final fcmToken = await fcmService.getToken();
+
+                        // Add member to queue
+                        final memberId = await queueService.addMemberToQueue(
                           queueId: queue.id,
                           userId: currentUser.uid,
                           username: userName,
                         );
+
+                        // Save FCM token to member document
+                        if (fcmToken != null) {
+                          await fcmService.saveTokenForMember(queue.id, memberId);
+                        }
 
                         if (context.mounted) {
                           Navigator.push(
@@ -412,13 +425,23 @@ class _JoinScreenState extends State<JoinScreen> {
                       Navigator.pop(dialogContext);
 
                       final guestUserId = 'guest_${DateTime.now().millisecondsSinceEpoch}';
+                      final fcmService = Provider.of<FCMService>(context, listen: false);
 
                       try {
-                        await queueService.addMemberToQueue(
+                        // Get FCM token for guest
+                        final fcmToken = await fcmService.getToken();
+
+                        // Add guest member to queue
+                        final memberId = await queueService.addMemberToQueue(
                           queueId: queue.id,
                           userId: guestUserId,
                           username: name,
                         );
+
+                        // Save token to member document for guest
+                        if (fcmToken != null) {
+                          await fcmService.saveTokenForMember(queue.id, memberId);
+                        }
 
                         if (context.mounted) {
                           Navigator.push(

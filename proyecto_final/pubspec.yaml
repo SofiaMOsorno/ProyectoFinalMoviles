@@ -29,6 +29,9 @@ dependencies:
   gal: ^2.3.0
   permission_handler: ^11.3.0
   url_launcher: ^6.3.1
+  firebase_messaging: ^15.2.10
+  http: ^1.1.0
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:

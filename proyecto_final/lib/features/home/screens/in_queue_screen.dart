@@ -8,6 +8,7 @@ import 'package:proyecto_final/services/guest_session_service.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
 import 'package:proyecto_final/models/queue_model.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:proyecto_final/services/queue_notification_service.dart';
 
 class InQueueScreen extends StatefulWidget {
   final String queueId;
@@ -27,12 +28,19 @@ class InQueueScreen extends StatefulWidget {
 
 class _InQueueScreenState extends State<InQueueScreen> {
   final QueueService _queueService = QueueService();
+  final QueueNotificationService _notificationService = QueueNotificationService();
   QueueModel? _queueData;
+  int? _lastPosition; // Track last known position
 
   @override
   void initState() {
     super.initState();
     _loadQueueData();
+    // Start listening to position changes for notifications
+    _notificationService.listenToQueuePositionChanges(
+      widget.queueId,
+      widget.userId,
+    );
   }
 
   Future<void> _loadQueueData() async {
@@ -313,6 +321,9 @@ class _InQueueScreenState extends State<InQueueScreen> {
                       );
                     }
 
+                    // Check if position changed to 0 or 1 and send notification
+                    _checkPositionChange(userMember.position);
+
                     final position = userMember.position + 1;
                     final totalMembers = members.length;
                     final progress = totalMembers > 1 ? (totalMembers - position) / (totalMembers - 1) : 1.0;
@@ -418,6 +429,24 @@ class _InQueueScreenState extends State<InQueueScreen> {
         );
       },
     );
+  }
+
+  void _checkPositionChange(int currentPosition) {
+    // Only send notification if position changed
+    if (_lastPosition != null && _lastPosition != currentPosition) {
+      if (currentPosition == 0) {
+        _notificationService.checkAndNotifyPosition(
+          widget.queueId,
+          widget.userId,
+        );
+      } else if (currentPosition == 1) {
+        _notificationService.checkAndNotifyPosition(
+          widget.queueId,
+          widget.userId,
+        );
+      }
+    }
+    _lastPosition = currentPosition;
   }
 
   Widget _buildShareCodeButton(ThemeProvider themeProvider) {
