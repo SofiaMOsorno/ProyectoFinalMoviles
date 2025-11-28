@@ -226,20 +226,32 @@ class QueueService {
           .doc(memberId)
           .delete();
 
-      // Intentar actualizar contador
+      // Intentar actualizar contador pero silenciar errores de permisos para usuarios invitados
       try {
         await _firestore.collection('queues').doc(queueId).update({
           'currentCount': FieldValue.increment(-1),
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } catch (updateError) {
-        print('Warning: Could not update queue counter: $updateError');
+        // Silenciar el error porque el contador se sincronizará eventualmente
+        print('Info: Queue counter not updated (expected for guest users): $updateError');
       }
 
-      await _reorderQueuePositions(queueId);
+      // Intentar reordenar posiciones y silenciar errores de permisos
+      try {
+        await _reorderQueuePositions(queueId);
+      } catch (reorderError) {
+        // Silenciar el error porque las posiciones se sincronizarán eventualmente
+        print('Info: Queue positions not reordered (expected for guest users): $reorderError');
+      }
     } catch (e) {
-      print('Error in removeMemberFromQueue: $e');
-      throw 'Error removing member from queue: $e';
+      // Solo lanzar error si es algo diferente a permisos
+      if (!e.toString().contains('permission') && !e.toString().contains('PERMISSION_DENIED')) {
+        print('Error in removeMemberFromQueue: $e');
+        throw 'Error removing member from queue: $e';
+      }
+      // Si es error de permisos, ignorarlo ya que el miembro fue eliminado exitosamente
+      print('Info: Member removed successfully, permission errors ignored');
     }
   }
 

@@ -8,6 +8,7 @@ import 'package:proyecto_final/features/home/screens/in_queue_screen.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/services/guest_session_service.dart';
 import 'package:proyecto_final/models/queue_model.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
