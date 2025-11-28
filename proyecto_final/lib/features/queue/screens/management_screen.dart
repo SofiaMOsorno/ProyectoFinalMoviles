@@ -267,17 +267,17 @@ class _ManagementScreenState extends State<ManagementScreen> {
 
   Widget _buildBottomControls(BuildContext context, ThemeProvider themeProvider) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       color: themeProvider.backgroundColor,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (_queueData?.maxPeople != null) ...[
             _buildAllowMoreUsersButton(themeProvider),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
           ],
           _buildSeeQRButton(themeProvider),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _buildShowUsernamesToggle(themeProvider),
           const SizedBox(height: 12),
           _buildBackButton(context, themeProvider),
@@ -290,7 +290,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
   Widget _buildAllowMoreUsersButton(ThemeProvider themeProvider) {
     return SizedBox(
       width: double.infinity,
-      height: 60,
+      height: 50,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: themeProvider.secondaryColor,
@@ -310,7 +310,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
           'Allow more users to join',
           style: GoogleFonts.lexendDeca(
             color: themeProvider.textPrimary,
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -343,6 +343,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
   Widget _buildShowUsernamesToggle(ThemeProvider themeProvider) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 48,
@@ -424,7 +425,19 @@ class _ManagementScreenState extends State<ManagementScreen> {
                 );
               },
             );
-          }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: themeProvider.secondaryColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.info_outline,
+              color: themeProvider.textPrimary,
+              size: 16,
+            ),
+          ),
         ),
       ],
     );
@@ -433,12 +446,12 @@ class _ManagementScreenState extends State<ManagementScreen> {
   Widget _buildBackButton(BuildContext context, ThemeProvider themeProvider) {
     return SizedBox(
       width: double.infinity,
-      height: 80,
+      height: 60,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: themeProvider.secondaryColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(15),
           ),
           elevation: 0,
         ),
@@ -449,7 +462,7 @@ class _ManagementScreenState extends State<ManagementScreen> {
           'BACK',
           style: GoogleFonts.ericaOne(
             color: themeProvider.backgroundColor,
-            fontSize: 40,
+            fontSize: 32,
             height: 1.0,
           ),
         ),
