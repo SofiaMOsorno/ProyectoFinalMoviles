@@ -8,6 +8,7 @@ import 'package:proyecto_final/features/home/screens/in_queue_screen.dart';
 import 'package:proyecto_final/shared/widgets/custom_button.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/services/queue_service.dart';
+import 'package:proyecto_final/services/guest_session_service.dart';
 import 'package:proyecto_final/models/queue_model.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
 
@@ -412,12 +413,20 @@ class _JoinScreenState extends State<JoinScreen> {
                       Navigator.pop(dialogContext);
 
                       final guestUserId = 'guest_${DateTime.now().millisecondsSinceEpoch}';
+                      final guestSessionService = GuestSessionService();
 
                       try {
                         await queueService.addMemberToQueue(
                           queueId: queue.id,
                           userId: guestUserId,
                           username: name,
+                        );
+
+                        // Guardar la sesión de invitado
+                        await guestSessionService.saveGuestSession(
+                          guestUserId: guestUserId,
+                          queueId: queue.id,
+                          userName: name,
                         );
 
                         if (context.mounted) {
