@@ -32,6 +32,17 @@ class _InQueueScreenState extends State<InQueueScreen> {
   QueueModel? _queueData;
   int? _lastPosition;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadQueueData();
+    // Start listening to position changes for notifications
+    _notificationService.listenToQueuePositionChanges(
+      widget.queueId,
+      widget.userId,
+    );
+  }
+
   Future<void> _loadQueueData() async {
     try {
       final queue = await _queueService.getQueue(widget.queueId);
@@ -110,7 +121,6 @@ class _InQueueScreenState extends State<InQueueScreen> {
                     fontSize: 36,
                   ),
                 ),
-                //const SizedBox(height: 16),
                 Text(
                   'You will be redirected to the extra media your admin left for you',
                   textAlign: TextAlign.center,
@@ -119,7 +129,6 @@ class _InQueueScreenState extends State<InQueueScreen> {
                     fontSize: 18,
                   ),
                 ),
-                //const SizedBox(height: 24),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: themeProvider.secondaryColor,
@@ -223,43 +232,20 @@ class _InQueueScreenState extends State<InQueueScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 80.0),
-                child: Stack(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      decoration: BoxDecoration(
-                        color: themeProvider.secondaryColor,
-                      ),
-                      child: Text(
-                        "YOUR QUEUE",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.ericaOne(
-                          color: themeProvider.backgroundColor,
-                          fontSize: 43,
-                        ),
-                      ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  decoration: BoxDecoration(
+                    color: themeProvider.secondaryColor,
+                  ),
+                  child: Text(
+                    "YOUR QUEUE",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.ericaOne(
+                      color: themeProvider.backgroundColor,
+                      fontSize: 43,
                     ),
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.arrow_back,
-                          color: themeProvider.backgroundColor,
-                          size: 30,
-                        ),
-                        onPressed: () {
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/',
-                            (route) => false,
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               Expanded(
@@ -376,7 +362,7 @@ class _InQueueScreenState extends State<InQueueScreen> {
                               ),
                               const SizedBox(height: 20),
                               Text(
-                                '${_queueData?.title ?? 'Queue'} queue',
+                                '${_queueData?.title ?? 'Your'} queue',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.ericaOne(
                                   color: themeProvider.secondaryColor,
@@ -385,7 +371,9 @@ class _InQueueScreenState extends State<InQueueScreen> {
                               ),
                               const SizedBox(height: 20),
                               Text(
-                                "WE'LL LET YOU KNOW WHEN\nYOUR TURN IS CLOSE!",
+                                position == 1
+                                    ? "IT'S YOUR TURN!\nGO BEFORE THE TIME RUNS OUT!"
+                                    : "WE'LL LET YOU KNOW WHEN\nYOUR TURN IS CLOSE!",
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.lexendDeca(
                                   color: themeProvider.textPrimary,
@@ -421,7 +409,7 @@ class _InQueueScreenState extends State<InQueueScreen> {
   }
 
   void _checkPositionChange(int currentPosition) {
-    // Solo notificar si la posición cambió Y es 0 o 1
+    // Solo notificar si la posición cambió y es 0 o 1
     if (_lastPosition != null && _lastPosition != currentPosition) {
       if (currentPosition == 0 || currentPosition == 1) {
         // Usar Future.delayed para evitar múltiples notificaciones
