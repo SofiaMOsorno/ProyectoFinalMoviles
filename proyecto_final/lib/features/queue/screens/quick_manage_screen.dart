@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/services/queue_service.dart';
 import 'package:proyecto_final/services/auth_service.dart';
+import 'package:proyecto_final/services/queue_timeout_service.dart';
 import 'package:proyecto_final/models/queue_member_model.dart';
 import 'package:proyecto_final/models/queue_model.dart';
 import 'package:proyecto_final/features/queue/screens/management_screen.dart';
@@ -25,56 +26,43 @@ class QuickManageScreen extends StatefulWidget {
 
 class _QuickManageScreenState extends State<QuickManageScreen> {
   final QueueService _queueService = QueueService();
-  Timer? _countdownTimer;
-  int _remainingSeconds = 0;
-  bool _isTimerActive = false;
-  String? _currentMemberId;
+  final QueueTimeoutService _timeoutService = QueueTimeoutService();
+  Timer? _uiUpdateTimer;
 
   @override
-  void dispose() {
-    _countdownTimer?.cancel();
-    super.dispose();
-  }
+  void initState() {
+    super.initState();
+    // Iniciar el monitoreo de timeouts para esta fila
+    _timeoutService.startMonitoring(widget.queueId);
 
-  void _startCountdown(int timerSeconds, String memberId) {
-    _countdownTimer?.cancel();
-
-    setState(() {
-      _remainingSeconds = timerSeconds;
-      _isTimerActive = true;
-      _currentMemberId = memberId;
-    });
-
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
-      } else {
-        timer.cancel();
-        setState(() {
-          _isTimerActive = false;
-        });
-        _removeCurrentUser(memberId, isTimeout: true);
+    // Timer para actualizar la UI cada segundo
+    _uiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {});
       }
     });
   }
 
-  void _stopCountdown() {
-    _countdownTimer?.cancel();
-    setState(() {
-      _isTimerActive = false;
-      _remainingSeconds = 0;
-      _currentMemberId = null;
-    });
+  @override
+  void dispose() {
+    _uiUpdateTimer?.cancel();
+    _timeoutService.stopMonitoring(widget.queueId);
+    super.dispose();
+  }
+
+  int _calculateRemainingSeconds(QueueMemberModel member, int timerSeconds) {
+    if (member.timeoutStartedAt == null) {
+      return timerSeconds;
+    }
+
+    final now = DateTime.now();
+    final elapsedSeconds = now.difference(member.timeoutStartedAt!).inSeconds;
+    final remaining = timerSeconds - elapsedSeconds;
+
+    return remaining > 0 ? remaining : 0;
   }
 
   Future<void> _removeCurrentUser(String memberId, {bool isTimeout = false}) async {
-    _countdownTimer?.cancel();
-    setState(() {
-      _isTimerActive = false;
-    });
-
     try {
       await _queueService.removeMemberFromQueue(
         queueId: widget.queueId,
@@ -126,7 +114,6 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
                 color: themeProvider.textPrimary,
               ),
               onPressed: () {
-                _stopCountdown();
                 Navigator.pop(context);
               },
             ),
@@ -190,12 +177,8 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
                   }
 
                   final firstMember = members.first;
-
-                  if (!_isTimerActive && _currentMemberId != firstMember.id) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _startCountdown(queue.timerSeconds, firstMember.id);
-                    });
-                  }
+                  final remainingSeconds = _calculateRemainingSeconds(firstMember, queue.timerSeconds);
+                  final isTimerActive = firstMember.timeoutStartedAt != null;
 
                   return Padding(
                     padding: const EdgeInsets.all(20.0),
@@ -259,6 +242,8 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
                                     child: _buildTimeoutButton(
                                       themeProvider,
                                       firstMember.id,
+                                      remainingSeconds,
+                                      isTimerActive,
                                     ),
                                   ),
                                 ],
@@ -321,23 +306,28 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
     );
   }
 
-  Widget _buildTimeoutButton(ThemeProvider themeProvider, String memberId) {
+  Widget _buildTimeoutButton(
+    ThemeProvider themeProvider,
+    String memberId,
+    int remainingSeconds,
+    bool isTimerActive,
+  ) {
     return SizedBox(
       height: 120,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: _isTimerActive ? Colors.red : Colors.grey,
+          backgroundColor: isTimerActive ? Colors.red : Colors.grey,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           elevation: 5,
         ),
-        onPressed: _isTimerActive ? () => _removeCurrentUser(memberId, isTimeout: true) : null,
+        onPressed: isTimerActive ? () => _removeCurrentUser(memberId, isTimeout: true) : null,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              _formatTime(_remainingSeconds),
+              _formatTime(remainingSeconds),
               style: GoogleFonts.ericaOne(
                 color: Colors.white,
                 fontSize: 32,
@@ -370,7 +360,6 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
           elevation: 0,
         ),
         onPressed: () {
-          _stopCountdown();
           Navigator.push(
             context,
             MaterialPageRoute(

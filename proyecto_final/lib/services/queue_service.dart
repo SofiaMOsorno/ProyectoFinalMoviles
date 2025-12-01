@@ -184,6 +184,7 @@ class QueueService {
           'username': username,
           'position': currentCount,
           'joinedAt': FieldValue.serverTimestamp(),
+          'timeoutStartedAt': currentCount == 0 ? FieldValue.serverTimestamp() : null,
         };
 
         transaction.set(memberRef, memberData);
@@ -337,7 +338,14 @@ class QueueService {
       WriteBatch batch = _firestore.batch();
 
       for (int i = 0; i < membersSnapshot.docs.length; i++) {
-        batch.update(membersSnapshot.docs[i].reference, {'position': i});
+        final updateData = <String, dynamic>{'position': i};
+
+        // Si este miembro está siendo movido a la posición 0, iniciar su timeout
+        if (i == 0) {
+          updateData['timeoutStartedAt'] = FieldValue.serverTimestamp();
+        }
+
+        batch.update(membersSnapshot.docs[i].reference, updateData);
       }
 
       await batch.commit();

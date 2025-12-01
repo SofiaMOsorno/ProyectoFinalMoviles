@@ -6,6 +6,7 @@ import 'package:proyecto_final/core/theme/theme_provider.dart';
 import 'package:proyecto_final/core/constants/app_routes.dart';
 import 'package:proyecto_final/services/auth_service.dart';
 import 'package:proyecto_final/services/fcm_service.dart';
+import 'package:proyecto_final/services/queue_timeout_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -19,7 +20,11 @@ void main() async {
   // Initialize FCM Service
   final fcmService = FCMService();
   await fcmService.initialize();
-  
+
+  // Initialize Queue Timeout Service
+  final queueTimeoutService = QueueTimeoutService();
+  queueTimeoutService.startGlobalMonitoring();
+
   runApp(MyApp(fcmService: fcmService));
 }
 
