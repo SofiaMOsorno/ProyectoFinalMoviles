@@ -55,15 +55,24 @@ class QueueTimeoutService {
         return;
       }
 
+      // Verificar cuántos miembros hay en la fila
+      final memberCount = await _queueService.getQueueMemberCount(queueId);
+
+      // Si solo hay una persona, no aplicar timeout
+      if (memberCount <= 1) {
+        return;
+      }
+
       final now = DateTime.now();
       final timeoutStartedAt = member.timeoutStartedAt!;
       final elapsedSeconds = now.difference(timeoutStartedAt).inSeconds;
 
-      // Si el tiempo ha expirado, remover al miembro
+      // Si el tiempo ha expirado, mover al miembro 3 posiciones hacia atrás
       if (elapsedSeconds >= queue.timerSeconds) {
-        await _queueService.removeMemberFromQueue(
+        await _queueService.moveMemberBackInQueue(
           queueId: queueId,
           memberId: member.id,
+          positionsToMoveBack: 3,
         );
       }
     } catch (e) {
@@ -88,16 +97,20 @@ class QueueTimeoutService {
           final queueData = queueDoc.data();
           final timerSeconds = queueData['timerSeconds'] ?? 60;
 
-          // Obtener el primer miembro
+          // Obtener todos los miembros para verificar el conteo
           final membersSnapshot = await _firestore
               .collection('queues')
               .doc(queueId)
               .collection('members')
               .orderBy('position')
-              .limit(1)
               .get();
 
           if (membersSnapshot.docs.isEmpty) {
+            continue;
+          }
+
+          // Si solo hay una persona, no aplicar timeout
+          if (membersSnapshot.docs.length <= 1) {
             continue;
           }
 
@@ -109,11 +122,12 @@ class QueueTimeoutService {
             final now = DateTime.now();
             final elapsedSeconds = now.difference(timeoutStartedAt).inSeconds;
 
-            // Si el tiempo ha expirado, remover al miembro
+            // Si el tiempo ha expirado, mover al miembro 3 posiciones hacia atrás
             if (elapsedSeconds >= timerSeconds) {
-              await _queueService.removeMemberFromQueue(
+              await _queueService.moveMemberBackInQueue(
                 queueId: queueId,
                 memberId: memberDoc.id,
+                positionsToMoveBack: 3,
               );
             }
           }

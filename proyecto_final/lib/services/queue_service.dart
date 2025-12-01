@@ -15,8 +15,6 @@ class QueueService {
     String? fileUrl,
   }) async {
     try {
-      final now = DateTime.now();
-
       final queueData = {
         'title': title,
         'description': description,
@@ -302,6 +300,84 @@ class QueueService {
       });
     } catch (e) {
       throw 'Error marking member as present: $e';
+    }
+  }
+
+  Future<void> moveMemberBackInQueue({
+    required String queueId,
+    required String memberId,
+    required int positionsToMoveBack,
+  }) async {
+    try {
+      final membersSnapshot = await _firestore
+          .collection('queues')
+          .doc(queueId)
+          .collection('members')
+          .orderBy('position')
+          .get();
+
+      if (membersSnapshot.docs.isEmpty) {
+        return;
+      }
+
+      final memberDoc = membersSnapshot.docs.firstWhere(
+        (doc) => doc.id == memberId,
+        orElse: () => throw 'Member not found',
+      );
+
+      final currentPosition = memberDoc.data()['position'] as int;
+
+      final availablePositions = membersSnapshot.docs.length - 1 - currentPosition;
+      final actualMoveBack = positionsToMoveBack < availablePositions
+          ? positionsToMoveBack
+          : availablePositions;
+
+      if (actualMoveBack <= 0) {
+        await _firestore
+            .collection('queues')
+            .doc(queueId)
+            .collection('members')
+            .doc(memberId)
+            .update({
+          'timeoutStartedAt': FieldValue.serverTimestamp(),
+        });
+        return;
+      }
+
+      final newPosition = currentPosition + actualMoveBack;
+
+      WriteBatch batch = _firestore.batch();
+
+      for (int i = 0; i < membersSnapshot.docs.length; i++) {
+        final doc = membersSnapshot.docs[i];
+        final docPosition = doc.data()['position'] as int;
+
+        if (doc.id == memberId) {
+          batch.update(doc.reference, {
+            'position': newPosition,
+            'timeoutStartedAt': FieldValue.serverTimestamp(),
+          });
+        } else if (docPosition > currentPosition && docPosition <= newPosition) {
+          batch.update(doc.reference, {
+            'position': docPosition - 1,
+          });
+
+          if (docPosition - 1 == 0) {
+            batch.update(doc.reference, {
+              'position': 0,
+              'timeoutStartedAt': FieldValue.serverTimestamp(),
+            });
+          }
+        }
+      }
+
+      await batch.commit();
+
+      await _firestore.collection('queues').doc(queueId).update({
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw 'Error moving member back in queue: $e';
     }
   }
 

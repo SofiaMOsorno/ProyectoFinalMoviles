@@ -485,10 +485,10 @@ class _InQueueScreenState extends State<InQueueScreen> {
     String statusText;
 
     if (isExpired) {
-      // Tiempo expirado - rojo
-      backgroundColor = Colors.red.shade100;
-      textColor = Colors.red.shade900;
-      statusText = 'KICKED FOR INACTIVITY';
+      // Tiempo expirado - naranja (ya no es tan dramático)
+      backgroundColor = Colors.orange.shade100;
+      textColor = Colors.orange.shade900;
+      statusText = 'MOVED BACK - PLEASE WAIT YOUR TURN';
     } else if (isPresent) {
       // Usuario presente - verde
       backgroundColor = Colors.green.shade100;
