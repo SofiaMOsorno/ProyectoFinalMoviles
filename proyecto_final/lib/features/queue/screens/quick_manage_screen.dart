@@ -62,6 +62,37 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
     return remaining > 0 ? remaining : 0;
   }
 
+  Future<void> _markUserAsPresent(String memberId) async {
+    try {
+      await _queueService.markMemberAsPresent(
+        queueId: widget.queueId,
+        memberId: memberId,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'User marked as present',
+              style: GoogleFonts.lexendDeca(),
+            ),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error marking user as present: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _removeCurrentUser(String memberId, {bool isTimeout = false}) async {
     try {
       await _queueService.removeMemberFromQueue(
@@ -229,24 +260,31 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
                                 ),
                               ),
                               const SizedBox(height: 40),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildCompleteButton(
-                                      themeProvider,
-                                      firstMember.id,
+                              if (isTimerActive) ...[
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildPresentButton(
+                                        themeProvider,
+                                        firstMember.id,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 20),
-                                  Expanded(
-                                    child: _buildTimeoutButton(
-                                      themeProvider,
-                                      firstMember.id,
-                                      remainingSeconds,
-                                      isTimerActive,
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: _buildTimeoutButton(
+                                        themeProvider,
+                                        firstMember.id,
+                                        remainingSeconds,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                              ],
+                              _buildCompleteButton(
+                                themeProvider,
+                                firstMember.id,
+                                isWaiting: isTimerActive,
                               ),
                               const SizedBox(height: 20),
                               Text(
@@ -272,9 +310,48 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
     );
   }
 
-  Widget _buildCompleteButton(ThemeProvider themeProvider, String memberId) {
+  Widget _buildPresentButton(ThemeProvider themeProvider, String memberId) {
     return SizedBox(
       height: 120,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 5,
+        ),
+        onPressed: () => _markUserAsPresent(memberId),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.person_pin_circle,
+              size: 50,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'PRESENT',
+              style: GoogleFonts.ericaOne(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompleteButton(
+    ThemeProvider themeProvider,
+    String memberId, {
+    bool isWaiting = false,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: isWaiting ? 60 : 120,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.green,
@@ -284,20 +361,20 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
           elevation: 5,
         ),
         onPressed: () => _removeCurrentUser(memberId),
-        child: Column(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.check,
-              size: 50,
+            Icon(
+              Icons.check_circle,
+              size: isWaiting ? 30 : 50,
               color: Colors.white,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(width: 10),
             Text(
               'COMPLETE',
               style: GoogleFonts.ericaOne(
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: isWaiting ? 20 : 24,
               ),
             ),
           ],
@@ -310,19 +387,18 @@ class _QuickManageScreenState extends State<QuickManageScreen> {
     ThemeProvider themeProvider,
     String memberId,
     int remainingSeconds,
-    bool isTimerActive,
   ) {
     return SizedBox(
       height: 120,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isTimerActive ? Colors.red : Colors.grey,
+          backgroundColor: Colors.red,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
           elevation: 5,
         ),
-        onPressed: isTimerActive ? () => _removeCurrentUser(memberId, isTimeout: true) : null,
+        onPressed: () => _removeCurrentUser(memberId, isTimeout: true),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

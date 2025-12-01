@@ -287,6 +287,24 @@ class QueueService {
     }
   }
 
+  Future<void> markMemberAsPresent({
+    required String queueId,
+    required String memberId,
+  }) async {
+    try {
+      await _firestore
+          .collection('queues')
+          .doc(queueId)
+          .collection('members')
+          .doc(memberId)
+          .update({
+        'timeoutStartedAt': null,
+      });
+    } catch (e) {
+      throw 'Error marking member as present: $e';
+    }
+  }
+
   Future<void> reorderMembers({
     required String queueId,
     required List<QueueMemberModel> members,
