@@ -261,9 +261,20 @@ class _InQueueScreenState extends State<InQueueScreen> {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return Scaffold(
-          backgroundColor: themeProvider.backgroundColor,
-          body: SafeArea(
+        return PopScope(
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) {
+              // Hacer un pop adicional después de que se complete el primero
+              Future.microtask(() {
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
+              });
+            }
+          },
+          child: Scaffold(
+            backgroundColor: themeProvider.backgroundColor,
+            body: SafeArea(
             child: Column(
               children: [
                 Container(
@@ -448,6 +459,7 @@ class _InQueueScreenState extends State<InQueueScreen> {
               ),
               ],
             ),
+          ),
           ),
         );
       },
