@@ -347,11 +347,18 @@ class _InQueueScreenState extends State<InQueueScreen> {
                     final totalMembers = members.length;
                     final progress = totalMembers > 1 ? (totalMembers - position) / (totalMembers - 1) : 1.0;
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
                           Column(
                             children: [
                               Text(
@@ -452,7 +459,11 @@ class _InQueueScreenState extends State<InQueueScreen> {
                             ],
                           ),
                         ],
-                      ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
