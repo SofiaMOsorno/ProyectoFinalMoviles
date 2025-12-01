@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -31,6 +32,8 @@ class _InQueueScreenState extends State<InQueueScreen> {
   final QueueNotificationService _notificationService = QueueNotificationService();
   QueueModel? _queueData;
   int? _lastPosition;
+  Timer? _uiUpdateTimer;
+  final ValueNotifier<int> _timerTick = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -41,6 +44,20 @@ class _InQueueScreenState extends State<InQueueScreen> {
       widget.queueId,
       widget.userId,
     );
+
+    // Timer para actualizar solo el contador cada segundo
+    _uiUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        _timerTick.value++;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _uiUpdateTimer?.cancel();
+    _timerTick.dispose();
+    super.dispose();
   }
 
   Future<void> _loadQueueData() async {
@@ -54,6 +71,24 @@ class _InQueueScreenState extends State<InQueueScreen> {
     } catch (e) {
       // Handle error silently
     }
+  }
+
+  int _calculateRemainingSeconds(QueueMemberModel member, int timerSeconds) {
+    if (member.timeoutStartedAt == null) {
+      return timerSeconds;
+    }
+
+    final now = DateTime.now();
+    final elapsedSeconds = now.difference(member.timeoutStartedAt!).inSeconds;
+    final remaining = timerSeconds - elapsedSeconds;
+
+    return remaining > 0 ? remaining : 0;
+  }
+
+  String _formatTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(1, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
   Future<void> _shareQueueCode(ThemeProvider themeProvider) async {
@@ -228,13 +263,12 @@ class _InQueueScreenState extends State<InQueueScreen> {
       builder: (context, themeProvider, child) {
         return Scaffold(
           backgroundColor: themeProvider.backgroundColor,
-          body: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 80.0),
-                child: Container(
+          body: SafeArea(
+            child: Column(
+              children: [
+                Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: themeProvider.secondaryColor,
                   ),
@@ -247,7 +281,6 @@ class _InQueueScreenState extends State<InQueueScreen> {
                     ),
                   ),
                 ),
-              ),
               Expanded(
                 child: StreamBuilder<List<QueueMemberModel>>(
                   stream: _queueService.getQueueMembers(widget.queueId),
@@ -381,6 +414,18 @@ class _InQueueScreenState extends State<InQueueScreen> {
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
+                              // Mostrar contador de timeout solo si está en posición 1
+                              if (position == 1 && _queueData != null)
+                                ValueListenableBuilder<int>(
+                                  valueListenable: _timerTick,
+                                  builder: (context, tick, child) {
+                                    return _buildTimeoutCounter(
+                                      themeProvider,
+                                      userMember,
+                                      _queueData!.timerSeconds,
+                                    );
+                                  },
+                                ),
                               const SizedBox(height: 20),
                               // Botón para compartir código
                               _buildShareCodeButton(themeProvider),
@@ -401,7 +446,8 @@ class _InQueueScreenState extends State<InQueueScreen> {
                   },
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -422,6 +468,63 @@ class _InQueueScreenState extends State<InQueueScreen> {
       }
     }
     _lastPosition = currentPosition;
+  }
+
+  Widget _buildTimeoutCounter(
+    ThemeProvider themeProvider,
+    QueueMemberModel member,
+    int timerSeconds,
+  ) {
+    final remainingSeconds = _calculateRemainingSeconds(member, timerSeconds);
+    final isPresent = member.timeoutStartedAt == null;
+    final isExpired = !isPresent && remainingSeconds == 0;
+
+    // Determinar el color basándose en el estado
+    Color backgroundColor;
+    Color textColor;
+    String statusText;
+
+    if (isExpired) {
+      // Tiempo expirado - rojo
+      backgroundColor = Colors.red.shade100;
+      textColor = Colors.red.shade900;
+      statusText = 'KICKED FOR INACTIVITY';
+    } else if (isPresent) {
+      // Usuario presente - verde
+      backgroundColor = Colors.green.shade100;
+      textColor = Colors.green.shade900;
+      statusText = 'YOU\'RE ALL SET!';
+    } else {
+      // Contando - naranja/ámbar
+      backgroundColor = Colors.orange.shade100;
+      textColor = Colors.orange.shade900;
+      statusText = 'TIME TO REPORT: ${_formatTime(remainingSeconds)}';
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: textColor.withOpacity(0.3),
+            width: 2,
+          ),
+        ),
+        child: Text(
+          statusText,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.lexendDeca(
+            color: textColor,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildShareCodeButton(ThemeProvider themeProvider) {
@@ -532,7 +635,7 @@ class _InQueueScreenState extends State<InQueueScreen> {
       padding: const EdgeInsets.only(bottom: 10),
       child: SizedBox(
         width: double.infinity,
-        height: 80,
+        height: 65,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: themeProvider.secondaryColor,
@@ -648,7 +751,7 @@ class _InQueueScreenState extends State<InQueueScreen> {
             'LEAVE QUEUE',
             style: GoogleFonts.ericaOne(
               color: themeProvider.textPrimary,
-              fontSize: 40,
+              fontSize: 32,
               height: 1.0,
             ),
           ),
